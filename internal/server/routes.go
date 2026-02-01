@@ -10,8 +10,8 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 
-	fileServer := http.FileServer(http.FS(web.Files))
-	mux.Handle("/assets/", fileServer)
+	fileServer := http.FileServer(http.FS(web.Static))
+	mux.Handle("/static/", fileServer)
 
 	// Wrap the mux with CORS middleware
 	return s.corsMiddleware(mux)

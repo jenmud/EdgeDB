@@ -39,6 +39,10 @@ func NewServer(address string) *http.Server {
 			slog.SetDefault(logger)
 			return context.Background()
 		},
+		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+			slog.Debug("connection from client", slog.Group("client", slog.String("address", c.RemoteAddr().String())))
+			return ctx
+		},
 		//IdleTimeout:  time.Minute,
 		//ReadTimeout:  10 * time.Second,
 		//WriteTimeout: 30 * time.Second,

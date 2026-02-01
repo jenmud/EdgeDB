@@ -43,7 +43,7 @@ func setupLogging() {
 	case "TEXT":
 		fallthrough
 	default:
-		handler = slog.NewJSONHandler(os.Stdout, &handlerOpts)
+		handler = slog.NewTextHandler(os.Stdout, &handlerOpts)
 	}
 
 	// Set up structured logging with slog
@@ -90,6 +90,8 @@ func main() {
 
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
+
+	slog.Info("Starting server", slog.Group("server", slog.String("address", server.Addr)))
 
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
