@@ -6,7 +6,7 @@ import (
 
 	"github.com/jenmud/edgedb/internal/store/models"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type Query struct {
