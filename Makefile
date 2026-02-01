@@ -30,3 +30,7 @@ tidy:
 
 vendor: tidy
 	$(GO) mod vendor
+
+
+run:
+	$(GO) run ./cmd/api

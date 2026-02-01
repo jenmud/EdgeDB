@@ -6,6 +6,7 @@ import (
 	"github.com/jenmud/edgedb/cmd/web"
 )
 
+// RegisterRoutes sets up the HTTP routes for the server.
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 
@@ -16,8 +17,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	return s.corsMiddleware(mux)
 }
 
+// corsMiddleware adds CORS headers to the HTTP responses.
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*") // Replace "*" with specific origins if needed
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
