@@ -2,20 +2,50 @@ package sqlite
 
 import (
 	"context"
+	"embed"
 	"errors"
 
 	"github.com/jenmud/edgedb/internal/store/models"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
+	_ "github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
+//go:embed "migrations/*.sql"
+var migrations embed.FS
+
 type Query struct {
-	db *sqlx.DB
+	dsn string
+	db  *sqlx.DB
 }
 
 // New creates a new Query instance with the provided database connection.
 func New(dns string) *Query {
-	return &Query{db: sqlx.MustConnect("sqlite3", dns)}
+	return &Query{
+		dsn: dns,
+		db:  sqlx.MustConnect("sqlite", dns),
+	}
+}
+
+func (q *Query) ApplyMigrations(ctx context.Context) error {
+	source, err := iofs.New(migrations, "migrations")
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithSourceInstance("iofs", source, q.dsn)
+	if err != nil {
+		return err
+	}
+
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+
+	return nil
 }
 
 func (q *Query) InsertNode(ctx context.Context, node models.Node) (models.Node, error) {

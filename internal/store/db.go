@@ -7,6 +7,9 @@ import (
 )
 
 type Querier interface {
+	// ApplyMigrations applies any database migrations.
+	ApplyMigrations(ctx context.Context) error
+
 	// InsertNode inserts a new node into the database.
 	InsertNode(context.Context, models.Node) (models.Node, error)
 
