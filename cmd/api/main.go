@@ -42,6 +42,7 @@ func setupStore(ctx context.Context) (*store.DB, error) {
 		return nil, errors.New("duckdb not store implemented")
 	case "sqlite":
 		db := sqlite.New(dsn)
+		slog.Info("applying db migrations")
 		return db, sqlite.ApplyMigrations(ctx, db)
 	}
 
