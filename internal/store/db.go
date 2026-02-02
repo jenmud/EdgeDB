@@ -2,29 +2,41 @@ package store
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/jenmud/edgedb/internal/store/models"
+	"github.com/jmoiron/sqlx"
 )
 
-type Querier interface {
-	// ApplyMigrations applies any database migrations.
-	ApplyMigrations(ctx context.Context) error
+// DB extends sqlx.DB to implement the Querier interface.
+// A implementation of the Querier interface can embed this struct to inherit its methods.
+type DB struct {
+	*sqlx.DB
+}
 
-	// InsertNode inserts a new node into the database.
-	InsertNode(context.Context, models.Node) (models.Node, error)
+func (b *DB) Tx(ctx context.Context) (*sql.Tx, error) {
+	return b.DB.BeginTx(ctx, nil)
+}
 
-	// InsertEdge inserts a new edge into the database.
-	InsertEdge(context.Context, models.Edge) (models.Edge, error)
+func (b *DB) Close() error {
+	return b.DB.Close()
+}
 
-	// Nodes retrieves all nodes from the database.
-	Nodes(context.Context) ([]models.Node, error)
+func (b *DB) InsertNode(ctx context.Context, node models.Node) (models.Node, error) {
+	return models.Node{}, errors.New("not implemented")
+}
 
-	// Edges retrieves all edges from the database.
-	Edges(context.Context) ([]models.Edge, error)
+func (b *DB) InsertEdge(ctx context.Context, edge models.Edge) (models.Edge, error) {
+	return models.Edge{}, errors.New("not implemented")
+}
 
-	// Node retrieves a single node by its ID.
-	Node(context.Context, uint64) (models.Node, error)
+func (b *DB) Nodes(ctx context.Context) ([]models.Node, error) {
+	var nodes []models.Node
+	return nodes, errors.New("not implemented")
+}
 
-	// Edge retrieves a single edge by its ID.
-	Edge(context.Context, uint64) (models.Edge, error)
+func (b *DB) Edges(ctx context.Context) ([]models.Edge, error) {
+	var edges []models.Edge
+	return edges, errors.New("not implemented")
 }

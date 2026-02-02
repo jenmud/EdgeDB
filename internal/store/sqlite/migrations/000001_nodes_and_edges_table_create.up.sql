@@ -13,7 +13,7 @@ CREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name);
 CREATE TABLE IF NOT EXISTS edges (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    properties JSON NOT NULL DEFAULT '{}',
+    properties JSON NOT NULL DEFAULT '{}'
 );
 
 

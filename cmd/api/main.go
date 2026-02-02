@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -12,8 +13,40 @@ import (
 	"time"
 
 	"github.com/jenmud/edgedb/internal/server"
+	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/internal/store/sqlite"
 	_ "github.com/joho/godotenv/autoload"
 )
+
+// setupStore sets up a new store and run the migrations.
+// Defaults to a in-momory SQLite store.
+func setupStore(ctx context.Context) (*store.DB, error) {
+	dsn := os.Getenv("EDGEDB_STORE_DSN")
+	if dsn == "" {
+		dsn = ":memory:"
+	}
+
+	driver := strings.ToLower(os.Getenv("EDGEDB_STORE_DRIVER"))
+	slog.SetDefault(
+		slog.With(
+			slog.Group(
+				"store",
+				slog.String("driver", driver),
+				slog.String("dsn", dsn),
+			),
+		),
+	)
+
+	switch strings.ToLower(os.Getenv("EDGEDB_STORE_DRIVER")) {
+	case "duckdb":
+		return nil, errors.New("duckdb not store implemented")
+	case "sqlite":
+		db := sqlite.New(dsn)
+		return db, sqlite.ApplyMigrations(ctx, db)
+	}
+
+	return nil, errors.New("unsupported store")
+}
 
 // setupLogging configures the logging settings based on environment variables.
 func setupLogging() {
@@ -55,9 +88,9 @@ func setupLogging() {
 }
 
 // gracefulShutdown handles OS interrupt signals to gracefully shut down the server.
-func gracefulShutdown(apiServer *http.Server, done chan bool) {
+func gracefulShutdown(ctx context.Context, apiServer *http.Server, done chan bool) {
 	// Create context that listens for the interrupt signal from the OS.
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	// Listen for the interrupt signal.
@@ -80,21 +113,28 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 
 // main is the entry point of the application.
 func main() {
-
 	setupLogging()
 
-	server := server.NewServer(os.Getenv("EDGEDB_WEB_ADDRESS"))
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	db, err := setupStore(ctx)
+	if err != nil {
+		slog.Error("error setting up store", slog.String("reason", err.Error()))
+		panic(fmt.Sprintf("setting up the store error: %s", err))
+	}
+
+	server := server.NewServer(os.Getenv("EDGEDB_WEB_ADDRESS"), db)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
 	// Run graceful shutdown in a separate goroutine
-	go gracefulShutdown(server, done)
+	go gracefulShutdown(ctx, server, done)
 
 	slog.Info("Starting server", slog.Group("server", slog.String("address", server.Addr)))
 
-	err := server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
 
