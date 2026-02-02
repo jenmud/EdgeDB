@@ -460,6 +460,18 @@ github.com/cncf/xds/go/xds/type/v3
 # github.com/cockroachdb/cockroach-go/v2 v2.4.3
 ## explicit; go 1.23
 github.com/cockroachdb/cockroach-go/v2/crdb
+# github.com/cweill/gotests v1.9.0
+## explicit; go 1.24.0
+github.com/cweill/gotests
+github.com/cweill/gotests/gotests
+github.com/cweill/gotests/gotests/process
+github.com/cweill/gotests/internal/ai
+github.com/cweill/gotests/internal/goparser
+github.com/cweill/gotests/internal/input
+github.com/cweill/gotests/internal/models
+github.com/cweill/gotests/internal/output
+github.com/cweill/gotests/internal/render
+github.com/cweill/gotests/templates
 # github.com/danieljoos/wincred v1.2.3
 ## explicit; go 1.18
 github.com/danieljoos/wincred

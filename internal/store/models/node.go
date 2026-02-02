@@ -25,7 +25,7 @@ func (n Node) Create(ctx context.Context, s *store.DB) error {
 
 	`
 
-	stmt := tx.PrepareContext(ctx)
+	stmt := tx.PrepareContext(ctx, query)
 
 	return tx.Commit()
 }
