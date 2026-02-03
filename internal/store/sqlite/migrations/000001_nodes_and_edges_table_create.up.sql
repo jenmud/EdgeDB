@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS nodes (
 );
 
 
-CREATE TRIGGER nodes_id_not_zero
+CREATE TRIGGER IF NOT EXISTS nodes_id_not_zero
 BEFORE INSERT ON nodes
 FOR EACH ROW
 WHEN NEW.id = 0
