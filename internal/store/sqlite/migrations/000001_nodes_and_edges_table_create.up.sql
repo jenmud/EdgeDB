@@ -7,6 +7,16 @@ CREATE TABLE IF NOT EXISTS nodes (
 );
 
 
+CREATE TRIGGER nodes_id_not_zero
+BEFORE INSERT ON nodes
+FOR EACH ROW
+WHEN NEW.id = 0
+BEGIN
+    SELECT RAISE(ABORT, 'id must be greater than 0');
+END;
+
+
+
 CREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name);
 
 

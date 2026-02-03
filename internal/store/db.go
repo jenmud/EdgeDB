@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"os"
@@ -66,14 +67,84 @@ func New(ctx context.Context, driver, dsn string) (*DB, error) {
 	return nil, errors.New("unsupported store")
 }
 
-// Tx starts a new transaction.
-func (b *DB) Tx(ctx context.Context) (*sql.Tx, error) {
-	return b.DB.BeginTx(ctx, nil)
-}
-
-// Close closed the database.
+// Close closed the store.
 func (b *DB) Close() error {
 	return b.DB.Close()
+}
+
+// InsertNode inserts a new node into the store.
+func (b *DB) InsertNode(ctx context.Context, n Node) (Node, error) {
+	nodes, err := b.InsertNodes(ctx, n)
+	if err != nil {
+		return Node{}, err
+	}
+
+	if len(nodes) != 1 {
+		return Node{}, sql.ErrNoRows
+	}
+
+	return nodes[0], nil
+}
+
+// InsertNodes inserts one or more nodes into the store.
+func (b *DB) InsertNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
+	inserted := make([]Node, 0, len(nodes))
+
+	tx, err := b.BeginTxx(ctx, nil)
+	if err != nil {
+		return inserted, err
+	}
+
+	defer tx.Rollback()
+
+	for _, n := range nodes {
+
+		var node Node
+		var props json.RawMessage
+
+		if n.Properties != nil {
+			propsBytes, err := json.Marshal(n.Properties)
+			if err != nil {
+				return inserted, err
+			}
+
+			props = propsBytes
+		}
+
+		// TODO: this statement should come from the driver used.
+		query := `
+			INSERT INTO nodes (name, properties)
+			VALUES (?, ?)
+			RETURNING id, name, properties;
+		`
+
+		row := tx.QueryRowContext(ctx, query, n.Name, props)
+
+		if err := row.Scan(&node.ID, &node.Name, &props); err != nil {
+			return inserted, err
+		}
+
+		if err := json.Unmarshal(props, &node.Properties); err != nil {
+			return inserted, err
+		}
+
+		inserted = append(inserted, node)
+	}
+
+	return inserted, tx.Commit()
+}
+
+// Nodes returns all the nodes in the store.
+func (b *DB) NodeByID(ctx context.Context, id uint64) (Node, error) {
+	query := `
+		SELECT * FROM nodes
+		WHERE id = ?;
+	`
+
+	var node Node
+	err := b.GetContext(ctx, &node, query, id)
+
+	return node, err
 }
 
 // Nodes returns all the nodes in the store.
