@@ -1,4 +1,4 @@
-package models
+package store
 
 // Edge represents an edge in the store.
 type Edge struct {

@@ -2,10 +2,10 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"errors"
 
-	"github.com/jenmud/edgedb/internal/store"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 
@@ -18,25 +18,26 @@ import (
 var migrations embed.FS
 
 // New creates a new Query instance with the provided database connection.
-func New(dns string) *store.DB {
-	q := &store.DB{
-		DB: sqlx.MustConnect("sqlite", dns),
+func New(dns string) (*sqlx.DB, error) {
+	db, err := sqlx.Connect("sqlite", dns)
+	if err != nil {
+		return nil, err
 	}
 
 	// call SetMaxOpenConns to 1 for SQLite to avoid "database is locked" errors on the original underlying DB
-	q.DB.SetMaxOpenConns(1)
-	return q
+	db.SetMaxOpenConns(1)
+	return db, nil
 }
 
 // ApplyMigrations applies database migrations from the embedded filesystem.
-func ApplyMigrations(ctx context.Context, db *store.DB) error {
+func ApplyMigrations(ctx context.Context, db *sql.DB) error {
 	source, err := iofs.New(migrations, "migrations")
 	if err != nil {
 		return err
 	}
 
 	// db.DB.DB is a bit of inheritance mess
-	driver, err := migrateSQLite.WithInstance(db.DB.DB, &migrateSQLite.Config{})
+	driver, err := migrateSQLite.WithInstance(db, &migrateSQLite.Config{})
 	if err != nil {
 		return err
 	}

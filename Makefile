@@ -16,6 +16,13 @@ install:install-tools install-tailwind-cli
 install-tools:
 	$(GO) install tool
 
+
+# If you want to use vscode to generate tests, you will need to have gotests installed on the machine
+# because you can not get vscode to use `go tool gotests ...`
+install-gotests:
+	go install github.com/cweill/gotests/gotests@latest
+
+
 tools:
 	@$(GO) tool
 

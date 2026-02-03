@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,40 +13,8 @@ import (
 
 	"github.com/jenmud/edgedb/internal/server"
 	"github.com/jenmud/edgedb/internal/store"
-	"github.com/jenmud/edgedb/internal/store/sqlite"
 	_ "github.com/joho/godotenv/autoload"
 )
-
-// setupStore sets up a new store and run the migrations.
-// Defaults to a in-momory SQLite store.
-func setupStore(ctx context.Context) (*store.DB, error) {
-	dsn := os.Getenv("EDGEDB_STORE_DSN")
-	if dsn == "" {
-		dsn = ":memory:"
-	}
-
-	driver := strings.ToLower(os.Getenv("EDGEDB_STORE_DRIVER"))
-	slog.SetDefault(
-		slog.With(
-			slog.Group(
-				"store",
-				slog.String("driver", driver),
-				slog.String("dsn", dsn),
-			),
-		),
-	)
-
-	switch strings.ToLower(os.Getenv("EDGEDB_STORE_DRIVER")) {
-	case "duckdb":
-		return nil, errors.New("duckdb not store implemented")
-	case "sqlite":
-		db := sqlite.New(dsn)
-		slog.Info("applying db migrations")
-		return db, sqlite.ApplyMigrations(ctx, db)
-	}
-
-	return nil, errors.New("unsupported store")
-}
 
 // setupLogging configures the logging settings based on environment variables.
 func setupLogging() {
@@ -119,7 +86,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	db, err := setupStore(ctx)
+	db, err := store.New(ctx, "", "") // let it load up from environment variables.
 	if err != nil {
 		slog.Error("error setting up store", slog.String("reason", err.Error()))
 		panic(fmt.Sprintf("setting up the store error: %s", err))
