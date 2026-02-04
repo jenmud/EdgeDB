@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"os"
@@ -73,8 +72,8 @@ func (b *DB) Close() error {
 }
 
 // InsertNode inserts a new node into the store.
-func (b *DB) InsertNode(ctx context.Context, n Node) (Node, error) {
-	nodes, err := b.InsertNodes(ctx, n)
+func (b *DB) InsertNode(ctx context.Context, name string, props Properties) (Node, error) {
+	nodes, err := b.SyncNodes(ctx, Node{Name: name, Properties: props})
 	if err != nil {
 		return Node{}, err
 	}
@@ -86,11 +85,11 @@ func (b *DB) InsertNode(ctx context.Context, n Node) (Node, error) {
 	return nodes[0], nil
 }
 
-// InsertNodes inserts one or more nodes into the store.
-func (b *DB) InsertNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
+// SyncNodes syncs one or more nodes with the store.
+func (b *DB) SyncNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
 	inserted := make([]Node, 0, len(nodes))
 
-	tx, err := b.BeginTxx(ctx, nil)
+	tx, err := b.BeginTx(ctx, nil)
 	if err != nil {
 		return inserted, err
 	}
@@ -98,33 +97,14 @@ func (b *DB) InsertNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
 	defer tx.Rollback()
 
 	for _, n := range nodes {
+		f := insertNode
 
-		var node Node
-		var props json.RawMessage
-
-		if n.Properties != nil {
-			propsBytes, err := json.Marshal(n.Properties)
-			if err != nil {
-				return inserted, err
-			}
-
-			props = propsBytes
+		if n.ID > 0 {
+			f = upsertNode
 		}
 
-		// TODO: this statement should come from the driver used.
-		query := `
-			INSERT INTO nodes (name, properties)
-			VALUES (?, ?)
-			RETURNING id, name, properties;
-		`
-
-		row := tx.QueryRowContext(ctx, query, n.Name, props)
-
-		if err := row.Scan(&node.ID, &node.Name, &props); err != nil {
-			return inserted, err
-		}
-
-		if err := json.Unmarshal(props, &node.Properties); err != nil {
+		node, err := f(ctx, tx, n)
+		if err != nil {
 			return inserted, err
 		}
 
@@ -132,6 +112,64 @@ func (b *DB) InsertNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
 	}
 
 	return inserted, tx.Commit()
+}
+
+// insertNode inserts a new node to the store.
+func insertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
+	var node Node
+
+	props, err := n.Properties.ToBytes()
+	if err != nil {
+		return node, err
+	}
+
+	// TODO: this statement should come from the driver used.
+	query := `
+		INSERT INTO nodes (name, properties)
+		VALUES (?, ?)
+		RETURNING id, name, properties;
+	`
+
+	row := tx.QueryRowContext(ctx, query, n.Name, props)
+
+	if err := row.Scan(&node.ID, &node.Name, &props); err != nil {
+		return node, err
+	}
+
+	if err := node.Properties.FromBytes(props); err != nil {
+		return node, err
+	}
+
+	return node, err
+}
+
+// upsertNode inserts or create a node in the store using the provided ID attached to the node.
+func upsertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
+	var node Node
+
+	props, err := n.Properties.ToBytes()
+	if err != nil {
+		return node, err
+	}
+
+	// TODO: this statement should come from the driver used.
+	query := `
+		INSERT OR REPLACE INTO nodes (id, name, properties)
+		VALUES (?, ?, ?)
+		RETURNING id, name, properties;
+	`
+
+	row := tx.QueryRowContext(ctx, query, n.ID, n.Name, props)
+
+	if err := row.Scan(&node.ID, &node.Name, &props); err != nil {
+		return node, err
+	}
+
+	if err := node.Properties.FromBytes(props); err != nil {
+		return node, err
+	}
+
+	return node, err
 }
 
 // Nodes returns all the nodes in the store.
