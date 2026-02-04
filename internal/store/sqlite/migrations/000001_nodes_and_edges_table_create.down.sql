@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS nodes;
-DROP TRIGGER IF EXISTS nodes_id_not_zero;
 DROP INDEX IF EXISTS idx_nodes_name;
 DROP TABLE IF EXISTS edges;
 DROP INDEX IF EXISTS idx_edges_name;
