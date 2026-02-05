@@ -10,7 +10,7 @@ install-tailwind-cli:
 	chmod +x $(HOME)/.local/bin/tailwindcss
 
 
-install:install-tools install-tailwind-cli
+install:install-gotests install-tools install-tailwind-cli
 
 
 install-tools:

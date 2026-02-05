@@ -1,7 +1,7 @@
 -- Migration to create nodes and edges tables
 
 CREATE TABLE IF NOT EXISTS nodes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     properties JSON NOT NULL DEFAULT '{}'
 );
@@ -11,7 +11,7 @@ CREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name);
 
 
 CREATE TABLE IF NOT EXISTS edges (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     properties JSON NOT NULL DEFAULT '{}'
 );

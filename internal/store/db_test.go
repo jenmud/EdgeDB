@@ -3,7 +3,6 @@ package store
 import (
 	"bytes"
 	"encoding/json"
-	"reflect"
 	"testing"
 )
 
@@ -32,19 +31,75 @@ func TestDB_SyncNodes(t *testing.T) {
 		name    string
 		driver  string
 		dsn     string
+		preload []Node
 		nodes   []Node
 		want    []Node
 		wantErr bool
 	}{
 		{
-			name:    "single-new-node",
-			driver:  "sqlite",
-			dsn:     ":memory:",
-			nodes:   []Node{{Name: "foo", Properties: Properties{"age": 21}}},
-			want:    []Node{{ID: 1, Name: "foo", Properties: Properties{"age": 21}}},
+			name:   "single-new-node",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			nodes: []Node{
+				{Name: "foo", Properties: Properties{"age": 21}},
+			},
+			want: []Node{
+				{ID: 1, Name: "foo", Properties: Properties{"age": 21}},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "single-update-node",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			preload: []Node{
+				{ID: 1, Name: "foo", Properties: Properties{"age": 21}},
+			},
+			nodes: []Node{
+				{ID: 1, Name: "foo", Properties: Properties{"age": 22}},
+			},
+			want: []Node{
+				{ID: 1, Name: "foo", Properties: Properties{"age": 22}},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "multiple-new-node",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			nodes: []Node{
+				{Name: "foo", Properties: Properties{"age": 21}},
+				{Name: "bar", Properties: Properties{"age": 22}},
+				{Name: "foobar"},
+			},
+			want: []Node{
+				{ID: 1, Name: "foo", Properties: Properties{"age": 21}},
+				{ID: 2, Name: "bar", Properties: Properties{"age": 22}},
+				{ID: 3, Name: "foobar"},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "multiple-mixed-new-and-update-node",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			preload: []Node{
+				{ID: 10, Name: "foobar"},
+			},
+			nodes: []Node{
+				{Name: "foo", Properties: Properties{"age": 21}},
+				{ID: 10, Name: "foobar-updated"},
+				{Name: "bar", Properties: Properties{"age": 22}},
+			},
+			want: []Node{
+				{ID: 2, Name: "foo", Properties: Properties{"age": 21}},
+				{ID: 10, Name: "foobar-updated"},
+				{ID: 11, Name: "bar", Properties: Properties{"age": 22}},
+			},
 			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
@@ -55,6 +110,10 @@ func TestDB_SyncNodes(t *testing.T) {
 				}
 				return
 			}
+
+			defer b.Close()
+
+			preload(t, b, tt.preload...)
 
 			got, gotErr := b.SyncNodes(t.Context(), tt.nodes...)
 			if gotErr != nil {
@@ -72,7 +131,17 @@ func TestDB_SyncNodes(t *testing.T) {
 				t.Errorf("SyncNodes() returned %d nodes, want %d", len(got), len(tt.nodes))
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
+			cmpA, err := json.Marshal(got)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			cmpB, err := json.Marshal(tt.want)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			if !bytes.Equal(cmpA, cmpB) {
 				t.Errorf("SyncNodes() returned %v, want %v", got, tt.nodes)
 			}
 		})
