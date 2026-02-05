@@ -3,6 +3,7 @@ package store_test
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/jenmud/edgedb/internal/store"
@@ -115,6 +116,62 @@ func TestProperties_FromBytes(t *testing.T) {
 				t.Fatalf("FromBytes(): %s does not equal %s", got, wantBytes)
 			}
 
+		})
+	}
+}
+
+func TestProperties_Scan(t *testing.T) {
+	tests := []struct {
+		name    string // description of this test case
+		src     any
+		want    store.Properties
+		wantErr bool
+	}{
+		{
+			name:    "proper-JSON-bytes",
+			src:     []byte(`{"name": "foo"}`),
+			want:    store.Properties{"name": "foo"},
+			wantErr: false,
+		},
+		{
+			name:    "proper-JSON-string",
+			src:     `{"name": "foo"}`,
+			want:    store.Properties{"name": "foo"},
+			wantErr: false,
+		},
+		{
+			name:    "proper-JSON-RawMessage",
+			src:     json.RawMessage(`{"name": "foo"}`),
+			want:    store.Properties{"name": "foo"},
+			wantErr: false,
+		},
+		{
+			name:    "broken-JSON",
+			src:     `{"name": "foo,}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var p store.Properties
+
+			gotErr := p.Scan(tt.src)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("Scan() failed: %v", gotErr)
+				}
+				return
+			}
+
+			if tt.wantErr {
+				t.Fatal("Scan() succeeded unexpectedly")
+				return
+			}
+
+			if !reflect.DeepEqual(p, tt.want) {
+				t.Errorf("Scan(): got %v but want %v", p, tt.want)
+			}
 		})
 	}
 }
