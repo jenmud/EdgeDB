@@ -71,7 +71,7 @@ func (b *DB) Close() error {
 	return b.db.Close()
 }
 
-// Tx returns a new transaction.
+// Tx returns a new transaction. You must `.Commit` or `.Rollback` when you are done with the transaction.
 func (b *DB) Tx(ctx context.Context) (*sql.Tx, error) {
 	return b.db.BeginTx(ctx, nil)
 }
