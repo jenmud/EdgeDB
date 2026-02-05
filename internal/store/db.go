@@ -86,7 +86,7 @@ func (b *DB) InsertNode(ctx context.Context, name string, props Properties) (Nod
 }
 
 // SyncNodes syncs one or more nodes with the store.
-// The node will be create in the store unless a conflict it will do a replace.
+// The node will be create in the store, but if conflict it will do a replace.
 func (b *DB) SyncNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
 	inserted := make([]Node, 0, len(nodes))
 
