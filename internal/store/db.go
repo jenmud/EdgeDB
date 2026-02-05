@@ -192,19 +192,19 @@ func (b *DB) NodeByID(ctx context.Context, id uint64) (Node, error) {
 }
 
 // safetyLimit is a safeguard limit
-const saftyLimit = 1000
+const safetyLimit = 1000
 
 // validateLimit is a function to validate and return a safe limit for returning multiple search items.
 func validateLimit(limit uint) uint {
-	if limit == 0 || limit > saftyLimit {
-		return saftyLimit
+	if limit == 0 || limit > safetyLimit {
+		return safetyLimit
 	}
 
 	return limit
 }
 
 // Nodes returns all the nodes in the store.
-// limit defaults to 1000 if ==0 or >1000.
+// limit defaults to `safetyLimit` (see const above) if ==0 or >safetyLimit.
 func (b *DB) Nodes(ctx context.Context, limit uint) ([]Node, error) {
 
 	limit = validateLimit(limit)
@@ -218,7 +218,7 @@ func (b *DB) Nodes(ctx context.Context, limit uint) ([]Node, error) {
 	return nodes, b.db.SelectContext(ctx, &nodes, query, limit)
 }
 
-// Edites returns all the edges in the store.
+// Edges returns all the edges in the store.
 func (b *DB) Edges(ctx context.Context) ([]Edge, error) {
 	var edges []Edge
 	return edges, errors.New("not implemented")

@@ -1,10 +1,10 @@
 package store
 
 import (
-	"bytes"
-	"encoding/json"
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 // preload helper for filling in the DB
@@ -45,7 +45,7 @@ func TestDB_SyncNodes(t *testing.T) {
 				{Name: "foo", Properties: Properties{"age": 21}},
 			},
 			want: []Node{
-				{ID: 1, Name: "foo", Properties: Properties{"age": 21}},
+				{ID: 1, Name: "foo", Properties: Properties{"age": float64(21)}},
 			},
 			wantErr: false,
 		},
@@ -60,7 +60,7 @@ func TestDB_SyncNodes(t *testing.T) {
 				{ID: 1, Name: "foo", Properties: Properties{"age": 22}},
 			},
 			want: []Node{
-				{ID: 1, Name: "foo", Properties: Properties{"age": 22}},
+				{ID: 1, Name: "foo", Properties: Properties{"age": float64(22)}},
 			},
 			wantErr: false,
 		},
@@ -74,8 +74,8 @@ func TestDB_SyncNodes(t *testing.T) {
 				{Name: "foobar"},
 			},
 			want: []Node{
-				{ID: 1, Name: "foo", Properties: Properties{"age": 21}},
-				{ID: 2, Name: "bar", Properties: Properties{"age": 22}},
+				{ID: 1, Name: "foo", Properties: Properties{"age": float64(21)}},
+				{ID: 2, Name: "bar", Properties: Properties{"age": float64(22)}},
 				{ID: 3, Name: "foobar"},
 			},
 			wantErr: false,
@@ -93,9 +93,9 @@ func TestDB_SyncNodes(t *testing.T) {
 				{Name: "bar", Properties: Properties{"age": 22}},
 			},
 			want: []Node{
-				{ID: 2, Name: "foo", Properties: Properties{"age": 21}},
+				{ID: 2, Name: "foo", Properties: Properties{"age": float64(21)}},
 				{ID: 10, Name: "foobar-updated"},
-				{ID: 11, Name: "bar", Properties: Properties{"age": 22}},
+				{ID: 11, Name: "bar", Properties: Properties{"age": float64(22)}},
 			},
 			wantErr: false,
 		},
@@ -132,19 +132,10 @@ func TestDB_SyncNodes(t *testing.T) {
 				t.Errorf("SyncNodes() returned %d nodes, want %d", len(got), len(tt.nodes))
 			}
 
-			cmpA, err := json.Marshal(got)
-			if err != nil {
-				t.Fatal(err.Error())
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("SyncNodes() = mismatch (-want, +got): \n%s", diff)
 			}
 
-			cmpB, err := json.Marshal(tt.want)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
-			if !bytes.Equal(cmpA, cmpB) {
-				t.Errorf("SyncNodes() returned %v, want %v", got, tt.nodes)
-			}
 		})
 	}
 }
@@ -163,7 +154,7 @@ func Test_insertNode(t *testing.T) {
 			driver:  "sqlite",
 			dsn:     ":memory:",
 			n:       Node{Name: "foo", Properties: Properties{"age": 21}},
-			want:    Node{ID: 1, Name: "foo", Properties: Properties{"age": 21}},
+			want:    Node{ID: 1, Name: "foo", Properties: Properties{"age": float64(21)}},
 			wantErr: false,
 		},
 		{
@@ -205,19 +196,10 @@ func Test_insertNode(t *testing.T) {
 				t.Fatal("insertNode() succeeded unexpectedly")
 			}
 
-			gotS, err := json.Marshal(got)
-			if err != nil {
-				t.Fatal(err.Error())
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("insertNodes() = mismatch (-want, +got): \n%s", diff)
 			}
 
-			wantS, err := json.Marshal(tt.want)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
-			if !bytes.EqualFold(gotS, wantS) {
-				t.Errorf("insertNode() = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
@@ -237,7 +219,7 @@ func Test_upsertNode(t *testing.T) {
 			driver:  "sqlite",
 			dsn:     ":memory:",
 			n:       Node{Name: "foo", Properties: Properties{"age": 21}},
-			want:    Node{ID: 0, Name: "foo", Properties: Properties{"age": 21}},
+			want:    Node{ID: 0, Name: "foo", Properties: Properties{"age": float64(21)}},
 			wantErr: false,
 		},
 		{
@@ -245,7 +227,7 @@ func Test_upsertNode(t *testing.T) {
 			driver:  "sqlite",
 			dsn:     ":memory:",
 			n:       Node{ID: 100, Name: "foo", Properties: Properties{"age": 21}},
-			want:    Node{ID: 100, Name: "foo", Properties: Properties{"age": 21}},
+			want:    Node{ID: 100, Name: "foo", Properties: Properties{"age": float64(21)}},
 			wantErr: false,
 		},
 		{
@@ -256,7 +238,7 @@ func Test_upsertNode(t *testing.T) {
 				{ID: 100, Name: "foo", Properties: Properties{"age": 21}},
 			},
 			n:       Node{ID: 100, Name: "foo2", Properties: Properties{"age": 22}},
-			want:    Node{ID: 100, Name: "foo2", Properties: Properties{"age": 22}},
+			want:    Node{ID: 100, Name: "foo2", Properties: Properties{"age": float64(22)}},
 			wantErr: false,
 		},
 		{
@@ -304,19 +286,10 @@ func Test_upsertNode(t *testing.T) {
 				t.Fatal("insertNode() succeeded unexpectedly")
 			}
 
-			gotS, err := json.Marshal(got)
-			if err != nil {
-				t.Fatal(err.Error())
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("upsertNodes() = mismatch (-want, +got): \n%s", diff)
 			}
 
-			wantS, err := json.Marshal(tt.want)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
-			if !bytes.EqualFold(gotS, wantS) {
-				t.Errorf("insertNode() = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
@@ -338,7 +311,7 @@ func TestDB_InsertNode(t *testing.T) {
 			dsn:      ":memory:",
 			nodeName: "Foo",
 			props:    Properties{"age": 21},
-			want:     Node{ID: 1, Name: "Foo", Properties: Properties{"age": 21}},
+			want:     Node{ID: 1, Name: "Foo", Properties: Properties{"age": float64(21)}},
 			wantErr:  false,
 		},
 		{
@@ -348,7 +321,7 @@ func TestDB_InsertNode(t *testing.T) {
 			preload:  []Node{{ID: 1, Name: "Bar"}},
 			nodeName: "Foo",
 			props:    Properties{"age": 21},
-			want:     Node{ID: 2, Name: "Foo", Properties: Properties{"age": 21}},
+			want:     Node{ID: 2, Name: "Foo", Properties: Properties{"age": float64(21)}},
 			wantErr:  false,
 		},
 	}
@@ -374,19 +347,10 @@ func TestDB_InsertNode(t *testing.T) {
 				t.Fatal("InsertNode() succeeded unexpectedly")
 			}
 
-			cmpA, err := json.Marshal(got)
-			if err != nil {
-				t.Fatal(err.Error())
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("InsertNode() = mismatch (-want, +got): \n%s", diff)
 			}
 
-			cmpB, err := json.Marshal(tt.want)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
-			if !bytes.Equal(cmpA, cmpB) {
-				t.Errorf("InsertNode() = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
@@ -410,7 +374,7 @@ func TestDB_NodeByID(t *testing.T) {
 				{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
 			},
 			id:      2,
-			want:    Node{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
+			want:    Node{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
 			wantErr: false,
 		},
 		{
@@ -447,19 +411,10 @@ func TestDB_NodeByID(t *testing.T) {
 				t.Fatal("NodeByID() succeeded unexpectedly")
 			}
 
-			cmpA, err := json.Marshal(got)
-			if err != nil {
-				t.Fatal(err.Error())
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("NodeByID() = mismatch (-want, +got): \n%s", diff)
 			}
 
-			cmpB, err := json.Marshal(tt.want)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
-			if !bytes.Equal(cmpA, cmpB) {
-				t.Errorf("NodeByID() = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
@@ -535,8 +490,8 @@ func TestDB_Nodes(t *testing.T) {
 				t.Fatal("NodeByID() succeeded unexpectedly")
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NodeByID() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("Nodes() = mismatch (-want, +got): \n%s", diff)
 			}
 		})
 	}
@@ -551,7 +506,7 @@ func Test_validateLimit(t *testing.T) {
 		{
 			name:  "zero-limit",
 			limit: 0,
-			want:  saftyLimit,
+			want:  safetyLimit,
 		},
 		{
 			name:  "with-in-limits",
@@ -561,14 +516,15 @@ func Test_validateLimit(t *testing.T) {
 		{
 			name:  "large-limit",
 			limit: 1000000,
-			want:  saftyLimit,
+			want:  safetyLimit,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := validateLimit(tt.limit)
-			if got != tt.want {
-				t.Errorf("validateLimit() = %v, want %v", got, tt.want)
+
+			if diff := cmp.Diff(tt.want, got, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("validateLimit() = mismatch (-want, +got): \n%s", diff)
 			}
 		})
 	}
