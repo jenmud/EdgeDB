@@ -9,7 +9,7 @@ import (
 
 // preload helper for filling in the DB
 func preload(t *testing.T, db *DB, n ...Node) {
-	tx, err := db.BeginTx(t.Context(), nil)
+	tx, err := db.Tx(t.Context())
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -186,7 +186,7 @@ func Test_insertNode(t *testing.T) {
 
 			defer db.Close()
 
-			tx, err := db.BeginTx(t.Context(), nil)
+			tx, err := db.Tx(t.Context())
 			if err != nil {
 				t.Fatal(err.Error())
 			}
@@ -285,7 +285,7 @@ func Test_upsertNode(t *testing.T) {
 
 			preload(t, db, tt.preload...)
 
-			tx, err := db.BeginTx(t.Context(), nil)
+			tx, err := db.Tx(t.Context())
 			if err != nil {
 				t.Fatal(err.Error())
 			}

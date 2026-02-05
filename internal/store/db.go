@@ -14,7 +14,7 @@ import (
 
 // DB extends sqlx.DB implementing additional methods used for the store..
 type DB struct {
-	*sqlx.DB
+	db *sqlx.DB
 }
 
 // New creates and returns a store.
@@ -60,7 +60,7 @@ func New(ctx context.Context, driver, dsn string) (*DB, error) {
 		}
 
 		slog.Info("applying db migrations")
-		return &DB{DB: db}, sqlite.ApplyMigrations(ctx, db.DB)
+		return &DB{db: db}, sqlite.ApplyMigrations(ctx, db.DB)
 	}
 
 	return nil, errors.New("unsupported store")
@@ -68,7 +68,12 @@ func New(ctx context.Context, driver, dsn string) (*DB, error) {
 
 // Close closed the store.
 func (b *DB) Close() error {
-	return b.DB.Close()
+	return b.db.Close()
+}
+
+// Tx returns a new transaction.
+func (b *DB) Tx(ctx context.Context) (*sql.Tx, error) {
+	return b.db.BeginTx(ctx, nil)
 }
 
 // InsertNode inserts a new node into the store.
@@ -90,7 +95,7 @@ func (b *DB) InsertNode(ctx context.Context, name string, props Properties) (Nod
 func (b *DB) SyncNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
 	inserted := make([]Node, 0, len(nodes))
 
-	tx, err := b.BeginTx(ctx, nil)
+	tx, err := b.Tx(ctx)
 	if err != nil {
 		return inserted, err
 	}
@@ -181,7 +186,7 @@ func (b *DB) NodeByID(ctx context.Context, id uint64) (Node, error) {
 	`
 
 	var node Node
-	err := b.GetContext(ctx, &node, query, id)
+	err := b.db.GetContext(ctx, &node, query, id)
 
 	return node, err
 }
@@ -210,7 +215,7 @@ func (b *DB) Nodes(ctx context.Context, limit uint) ([]Node, error) {
 		LIMIT ?;
 	`
 
-	return nodes, b.SelectContext(ctx, &nodes, query, limit)
+	return nodes, b.db.SelectContext(ctx, &nodes, query, limit)
 }
 
 // Edites returns all the edges in the store.
