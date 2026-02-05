@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -458,6 +459,116 @@ func TestDB_NodeByID(t *testing.T) {
 
 			if !bytes.Equal(cmpA, cmpB) {
 				t.Errorf("NodeByID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDB_Nodes(t *testing.T) {
+	tests := []struct {
+		name    string // description of this test case
+		driver  string
+		dsn     string
+		preload []Node
+		limit   uint
+		want    []Node
+		wantErr bool
+	}{
+		{
+			name:    "no-nodes-in-store",
+			driver:  "sqlite",
+			dsn:     ":memory:",
+			preload: []Node{},
+			want:    []Node{},
+			wantErr: false,
+		},
+		{
+			name:   "multiple-nodes",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			preload: []Node{
+				{ID: 1, Name: "foo"},
+				{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
+			},
+			want: []Node{
+				{ID: 1, Name: "foo"},
+				{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "multiple-nodes-limited-to-first-2",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			limit:  2,
+			preload: []Node{
+				{ID: 1, Name: "foo"},
+				{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
+				{ID: 3, Name: "foobar"},
+			},
+			want: []Node{
+				{ID: 1, Name: "foo"},
+				{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b, err := New(t.Context(), tt.driver, tt.dsn)
+			if err != nil {
+				t.Fatalf("could not construct receiver type: %v", err)
+			}
+
+			preload(t, b, tt.preload...)
+
+			got, gotErr := b.Nodes(t.Context(), tt.limit)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("NodeByID() failed: %v", gotErr)
+				}
+				return
+			}
+
+			if tt.wantErr {
+				t.Fatal("NodeByID() succeeded unexpectedly")
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NodeByID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_validateLimit(t *testing.T) {
+	tests := []struct {
+		name  string // description of this test case
+		limit uint
+		want  uint
+	}{
+		{
+			name:  "zero-limit",
+			limit: 0,
+			want:  saftyLimit,
+		},
+		{
+			name:  "with-in-limits",
+			limit: 100,
+			want:  100,
+		},
+		{
+			name:  "large-limit",
+			limit: 1000000,
+			want:  saftyLimit,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := validateLimit(tt.limit)
+			if got != tt.want {
+				t.Errorf("validateLimit() = %v, want %v", got, tt.want)
 			}
 		})
 	}

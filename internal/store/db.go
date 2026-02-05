@@ -185,10 +185,31 @@ func (b *DB) NodeByID(ctx context.Context, id uint64) (Node, error) {
 	return node, err
 }
 
+// safetyLimit is a safeguard limit
+const saftyLimit = 1000
+
+// validateLimit is a function to validate and return a safe limit for returning multiple search items.
+func validateLimit(limit uint) uint {
+	if limit == 0 || limit > saftyLimit {
+		return saftyLimit
+	}
+
+	return limit
+}
+
 // Nodes returns all the nodes in the store.
-func (b *DB) Nodes(ctx context.Context) ([]Node, error) {
-	var nodes []Node
-	return nodes, errors.New("not implemented")
+// limit defaults to 1000 if ==0 or >1000.
+func (b *DB) Nodes(ctx context.Context, limit uint) ([]Node, error) {
+
+	limit = validateLimit(limit)
+	nodes := make([]Node, 0, limit)
+
+	query := `
+		SELECT * FROM nodes
+		LIMIT ?;
+	`
+
+	return nodes, b.SelectContext(ctx, &nodes, query, limit)
 }
 
 // Edites returns all the edges in the store.
