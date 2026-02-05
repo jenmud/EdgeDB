@@ -1,5 +1,17 @@
 package store
 
+// Direction is the edge direction
+type Direction int
+
+const (
+	// Both is both incoming and outgoing edges - 0
+	Both Direction = iota
+	// In is only incoming edges - 1
+	In
+	// Out is only outgoing edges - 2
+	Out
+)
+
 // Edge represents an edge in the store.
 type Edge struct {
 	ID         uint64     `db:"id" json:"id"`
