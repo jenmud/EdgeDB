@@ -1,13 +1,14 @@
 package store_test
 
 import (
-	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/jenmud/edgedb/internal/store"
 )
 
-func TestFlattenJson(t *testing.T) {
+func TestFlattenMAP(t *testing.T) {
 	tests := []struct {
 		name       string // description of this test case
 		m          map[string]any
@@ -56,25 +57,26 @@ func TestFlattenJson(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotKeys, gotValues, gotErr := store.FlattenJson(tt.m)
+			gotKeys, gotValues, gotErr := store.FlattenMAP(tt.m)
 			if gotErr != nil {
 				if !tt.wantErr {
-					t.Errorf("FlattenJson() failed: %v", gotErr)
+					t.Errorf("FlattenMAP() failed: %v", gotErr)
 				}
 				return
 			}
 
 			if tt.wantErr {
-				t.Fatal("FlattenJson() succeeded unexpectedly")
+				t.Fatal("FlattenMAP() succeeded unexpectedly")
 			}
 
-			if !strings.EqualFold(gotKeys, tt.wantKeys) {
-				t.Errorf("FlattenJson() = %v, want %v", gotKeys, tt.wantKeys)
+			if diff := cmp.Diff(tt.wantKeys, gotKeys, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("FlatternMAP() = mismatch (-want, +got): \n%s", diff)
 			}
 
-			if !strings.EqualFold(gotValues, tt.wantValues) {
-				t.Errorf("FlattenJson() = %v, want %v", gotValues, tt.wantValues)
+			if diff := cmp.Diff(tt.wantValues, gotValues, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("FlatternMAP() = mismatch (-want, +got): \n%s", diff)
 			}
+
 		})
 	}
 }
