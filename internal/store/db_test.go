@@ -389,3 +389,76 @@ func TestDB_InsertNode(t *testing.T) {
 		})
 	}
 }
+
+func TestDB_NodeByID(t *testing.T) {
+	tests := []struct {
+		name    string // description of this test case
+		driver  string
+		dsn     string
+		preload []Node
+		id      uint64
+		want    Node
+		wantErr bool
+	}{
+		{
+			name:   "node-found",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			preload: []Node{
+				{ID: 1, Name: "foo"},
+				{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
+			},
+			id:      2,
+			want:    Node{ID: 2, Name: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
+			wantErr: false,
+		},
+		{
+			name:   "node-not-found",
+			driver: "sqlite",
+			dsn:    ":memory:",
+			preload: []Node{
+				{ID: 1, Name: "foo"},
+			},
+			id:      2,
+			want:    Node{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b, err := New(t.Context(), tt.driver, tt.dsn)
+			if err != nil {
+				t.Fatalf("could not construct receiver type: %v", err)
+			}
+
+			preload(t, b, tt.preload...)
+
+			got, gotErr := b.NodeByID(t.Context(), tt.id)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("NodeByID() failed: %v", gotErr)
+				}
+				return
+			}
+
+			if tt.wantErr {
+				t.Fatal("NodeByID() succeeded unexpectedly")
+			}
+
+			cmpA, err := json.Marshal(got)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			cmpB, err := json.Marshal(tt.want)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			if !bytes.Equal(cmpA, cmpB) {
+				t.Errorf("NodeByID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
