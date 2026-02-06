@@ -32,6 +32,7 @@ func Keys(m map[string]any) []string {
 
 			keys = append(keys, fullKey)
 
+			// FIXME: use reflect for handling different types
 			if nested, ok := v.(map[string]any); ok {
 				walker(nested, fullKey)
 			}
