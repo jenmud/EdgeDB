@@ -111,6 +111,16 @@ func TestKeys(t *testing.T) {
 			},
 			want: []string{"name", "meta", "meta.age"},
 		},
+		//{
+		//	name: "nested-2-levels-mixed-map-key-types",
+		//	m: map[string]any{
+		//		"name": "foo",
+		//		"meta": map[int]string{
+		//			21: "age",
+		//		},
+		//	},
+		//	want: []string{"name", "meta", "meta.21"},
+		//},
 		{
 			name: "nested-2-levels",
 			m: map[string]any{
