@@ -65,22 +65,52 @@ func Keys(m any) []string {
 }
 
 // Values will returns all the value from a map as a string.
-func Values(m map[string]any) []string {
+func Values(m any) []string {
 	values := []string{}
 
-	var walker func(current map[string]any)
+	if m == nil {
+		return values
+	}
 
-	walker = func(current map[string]any) {
-		for _, v := range current {
+	if reflect.TypeOf(m).Kind() != reflect.Map {
+		values = append(values, fmt.Sprintf("%v", m))
+	}
 
-			if nested, ok := v.(map[string]any); ok {
-				walker(nested)
-				continue
+	var walker func(current any)
+
+	walker = func(current any) {
+		v := reflect.ValueOf(current)
+
+		switch v.Kind() {
+
+		case reflect.Interface:
+			if v.IsNil() {
+				return
 			}
 
-			values = append(values, fmt.Sprintf("%v", v))
+		case reflect.Map:
+			iter := v.MapRange()
+			for iter.Next() {
+				val := iter.Value()
 
+				if val.Kind() == reflect.Interface && val.IsNil() {
+					continue
+				}
+
+				actualValue := val
+				if actualValue.Kind() == reflect.Interface && !actualValue.IsNil() {
+					actualValue = actualValue.Elem()
+				}
+
+				if actualValue.Kind() == reflect.Map {
+					walker(actualValue.Interface())
+					continue
+				}
+
+				values = append(values, fmt.Sprintf("%v", actualValue))
+			}
 		}
+
 	}
 
 	walker(m)

@@ -168,7 +168,7 @@ func TestKeys(t *testing.T) {
 func TestValues(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
-		m    map[string]any
+		m    any
 		want []string
 	}{
 		{
@@ -198,6 +198,41 @@ func TestValues(t *testing.T) {
 				},
 			},
 			want: []string{"foo", "21", "brown"},
+		},
+		{
+			name: "3-levels-mixed-map-key-types",
+			m: map[string]any{
+				"name": "foo",
+				"meta": map[int]any{
+					21: "age",
+					1: map[string]int{
+						"length": 100,
+					},
+				},
+			},
+			want: []string{"foo", "age", "100"},
+		},
+		{
+			name: "string-type",
+			m:    "some-string",
+			want: []string{"some-string"},
+		},
+		{
+			name: "nil-type",
+			m:    nil,
+			want: []string{},
+		},
+		{
+			name: "nested-with-nil-types",
+			m: map[string]any{
+				"name": "foo",
+				"age":  nil,
+				"meta": map[string]any{
+					"age":    21,
+					"height": nil,
+				},
+			},
+			want: []string{"foo", "21"},
 		},
 	}
 
