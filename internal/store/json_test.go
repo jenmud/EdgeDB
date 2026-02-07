@@ -90,7 +90,7 @@ func TestFlattenMAP(t *testing.T) {
 func TestKeys(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
-		m    map[string]any
+		m    any
 		want []string
 	}{
 		{
@@ -111,28 +111,33 @@ func TestKeys(t *testing.T) {
 			},
 			want: []string{"name", "meta", "meta.age"},
 		},
-		//{
-		//	name: "nested-2-levels-mixed-map-key-types",
-		//	m: map[string]any{
-		//		"name": "foo",
-		//		"meta": map[int]string{
-		//			21: "age",
-		//		},
-		//	},
-		//	want: []string{"name", "meta", "meta.21"},
-		//},
+		{
+			name: "nested-2-levels-mixed-map-key-types",
+			m: map[string]any{
+				"name": "foo",
+				"meta": map[int]string{
+					21: "age",
+				},
+			},
+			want: []string{"name", "meta", "meta.21"},
+		},
 		{
 			name: "nested-2-levels",
 			m: map[string]any{
 				"name": "foo",
 				"meta": map[string]any{
 					"age": 21,
-					"hair": map[string]any{
+					"hair": map[string]string{
 						"colour": "brown",
 					},
 				},
 			},
 			want: []string{"name", "meta", "meta.age", "meta.hair", "meta.hair.colour"},
+		},
+		{
+			name: "unknown-supported-type",
+			m:    "not-a-map",
+			want: []string{},
 		},
 	}
 

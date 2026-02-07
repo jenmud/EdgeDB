@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 )
@@ -17,26 +18,45 @@ func FlattenMAP(m map[string]any) (string, string) {
 }
 
 // Keys will returns all the keys from a map.
-func Keys(m map[string]any) []string {
+func Keys(m any) []string {
+	kind := reflect.TypeOf(m).Kind()
+	if kind != reflect.Map {
+		return []string{}
+	}
+
 	keys := []string{}
 
-	var walker func(current map[string]any, prefix string)
+	var walker func(current any, prefix string)
 
-	walker = func(current map[string]any, prefix string) {
-		for k, v := range current {
-			fullKey := k
+	walker = func(current any, prefix string) {
+		v := reflect.ValueOf(current)
 
-			if prefix != "" {
-				fullKey = prefix + "." + k
+		switch v.Kind() {
+
+		case reflect.Interface:
+			if v.IsNil() {
+				return
 			}
 
-			keys = append(keys, fullKey)
+		case reflect.Map:
+			for _, k := range v.MapKeys() {
+				fullKey := fmt.Sprintf("%v", k.Interface())
+				if prefix != "" {
+					fullKey = prefix + "." + fullKey
+				}
 
-			// FIXME: use reflect for handling different types
-			if nested, ok := v.(map[string]any); ok {
-				walker(nested, fullKey)
+				keys = append(keys, fullKey)
+
+				val := v.MapIndex(k)
+				actualValue := val
+				if actualValue.Kind() == reflect.Interface && !actualValue.IsNil() {
+					actualValue = actualValue.Elem()
+				}
+
+				if actualValue.Kind() == reflect.Map {
+					walker(actualValue.Interface(), fullKey)
+				}
 			}
-
 		}
 	}
 
