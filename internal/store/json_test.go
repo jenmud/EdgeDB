@@ -51,6 +51,22 @@ func TestFlattenMAP(t *testing.T) {
 			wantKeys:   "name meta meta.age meta.hair meta.hair.colour meta.hair.length_cm",
 			wantValues: "foo 21 brown 30",
 		},
+		{
+			name: "mixed-nested-types",
+			m: map[string]any{
+				"name": "foo",
+				"meta": map[string]any{
+					"age":    21,
+					"height": nil,
+					"weight": "100kg",
+					"hair": map[string]int{ // third layer
+						"length": 30,
+					},
+				},
+			},
+			wantKeys:   "name meta meta.age meta.height meta.weight meta.hair meta.hair.length",
+			wantValues: "foo 21 100kg 30",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
