@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 // FlattenMAP takes a map and tries to flatten all the keys and values into a single string
 // which can be used for FTS indexing.
-func FlattenMAP(m map[string]any) (string, string) {
+func FlattenMAP(m map[string]any) ([]string, []string) {
 	keys := Keys(m)
 	values := Values(m)
 	sort.StringSlice(keys).Sort()
 	sort.StringSlice(values).Sort()
-	return strings.Join(keys, " "), strings.Join(values, " ")
+	return keys, values
 }
 
 // Keys will returns all the keys from a map.
