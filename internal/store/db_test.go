@@ -153,8 +153,8 @@ func Test_insertNode(t *testing.T) {
 			name:    "new-node",
 			driver:  "sqlite",
 			dsn:     ":memory:",
-			n:       Node{Label: "foo", Properties: Properties{"age": 21}},
-			want:    Node{ID: 1, Label: "foo", Properties: Properties{"age": float64(21)}},
+			n:       Node{Label: "foo", Properties: Properties{"name": "foo", "meta": map[string]int{"age": 21}}},
+			want:    Node{ID: 1, Label: "foo", Properties: Properties{"name": "foo", "meta": map[string]any{"age": float64(21)}}},
 			wantErr: false,
 		},
 		{
