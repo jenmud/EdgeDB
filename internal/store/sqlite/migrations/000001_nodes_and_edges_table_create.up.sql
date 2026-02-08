@@ -12,10 +12,27 @@ CREATE INDEX IF NOT EXISTS idx_nodes_label ON nodes(label);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(
     label,
-    properties,
+    prop_keys,
+    prop_values,
     content='nodes',
     content_rowid='id'
 );
+
+
+CREATE TRIGGER IF NOT EXISTS nodes_after_delete
+AFTER DELETE ON nodes
+BEGIN
+    DELETE FROM nodes_fts WHERE rowid = OLD.id;
+END;
+
+
+CREATE TRIGGER IF NOT EXISTS nodes_after_update
+AFTER UPDATE ON nodes
+BEGIN
+    DELETE FROM nodes_fts WHERE rowid = OLD.id;
+    INSERT INTO nodes_fts (label, prop_keys, prop_values)
+    VALUES (NEW.label, NEW.prop_keys, NEW.prop_values);
+END;
 
 
 CREATE TABLE IF NOT EXISTS edges (
@@ -27,11 +44,27 @@ CREATE TABLE IF NOT EXISTS edges (
 
 CREATE VIRTUAL TABLE IF NOT EXISTS edges_fts USING fts5(
     label,
-    properties,
+    prop_keys,
+    prop_values,
     content='edges',
     content_rowid='id'
 );
 
+
+CREATE TRIGGER IF NOT EXISTS edges_after_delete
+AFTER DELETE ON edges
+BEGIN
+    DELETE FROM edges_fts WHERE rowid = OLD.id;
+END;
+
+
+CREATE TRIGGER IF NOT EXISTS edges_after_update
+AFTER UPDATE ON edges
+BEGIN
+    DELETE FROM edges_fts WHERE rowid = OLD.id;
+    INSERT INTO edges_fts (label, prop_keys, prop_values)
+    VALUES (NEW.label, NEW.prop_keys, NEW.prop_values);
+END;
 
 CREATE INDEX IF NOT EXISTS idx_edges_label ON edges(label);
 
