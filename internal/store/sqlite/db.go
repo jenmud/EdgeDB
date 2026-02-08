@@ -53,3 +53,5 @@ func ApplyMigrations(ctx context.Context, db *sql.DB) error {
 
 	return nil
 }
+
+// TODO: add in a custom function to sqlite to extract the property keys and values, then we should be able to use triggers to update the fts
