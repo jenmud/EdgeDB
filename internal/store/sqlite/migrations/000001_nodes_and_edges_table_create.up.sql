@@ -26,15 +26,6 @@ BEGIN
 END;
 
 
-CREATE TRIGGER IF NOT EXISTS nodes_after_update
-AFTER UPDATE ON nodes
-BEGIN
-    DELETE FROM nodes_fts WHERE id = OLD.id;
-    INSERT INTO nodes_fts (id, label, prop_keys, prop_values)
-    VALUES (NEW.id, NEW.label, NEW.prop_keys, NEW.prop_values);
-END;
-
-
 CREATE TABLE IF NOT EXISTS edges (
     id INTEGER PRIMARY KEY,
     label TEXT NOT NULL,
@@ -57,14 +48,6 @@ BEGIN
     DELETE FROM edges_fts WHERE id = OLD.id;
 END;
 
-
-CREATE TRIGGER IF NOT EXISTS edges_after_update
-AFTER UPDATE ON edges
-BEGIN
-    DELETE FROM edges_fts WHERE id = OLD.id;
-    INSERT INTO edges_fts (id, label, prop_keys, prop_values)
-    VALUES (NEW.id, NEW.label, NEW.prop_keys, NEW.prop_values);
-END;
 
 CREATE INDEX IF NOT EXISTS idx_edges_label ON edges(label);
 
