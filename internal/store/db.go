@@ -147,7 +147,7 @@ func insertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
 	}
 
 	fts_query := `
-		INSERT INTO nodes_fts (rowid, label, prop_keys, prop_values)
+		INSERT INTO nodes_fts (id, label, prop_keys, prop_values)
 		VALUES (?, ?, ?, ?);
 	`
 
@@ -188,13 +188,12 @@ func upsertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
 	}
 
 	fts_query := `
-		DELETE FROM nodes_fts WHERE rowid = ?;
-		INSERT INTO nodes_fts (label, prop_keys, prop_values)
-		VALUES (?, ?, ?);
+		DELETE from nodes_fts where id = ?;
+		INSERT INTO nodes_fts(id, label, prop_keys, prop_values) VALUES(?, ?, ?, ?);
 	`
 
 	keys, values := FlattenMAP(node.Properties)
-	if _, err := tx.ExecContext(ctx, fts_query, node.ID, node.Label, strings.Join(keys, ","), strings.Join(values, ",")); err != nil {
+	if _, err := tx.ExecContext(ctx, fts_query, node.ID, node.ID, node.Label, strings.Join(keys, ","), strings.Join(values, ",")); err != nil {
 		slog.Error("failed to update node FTS", "error", err)
 		// TODO: do we want to fail the whole transaction if the FTS insert fails
 		return node, err
