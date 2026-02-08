@@ -2,22 +2,38 @@
 
 CREATE TABLE IF NOT EXISTS nodes (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
+    label TEXT NOT NULL,
     properties JSON NOT NULL DEFAULT '{}'
 );
 
 
-CREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name);
+CREATE INDEX IF NOT EXISTS idx_nodes_label ON nodes(label);
+
+
+CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(
+    label,
+    properties,
+    content='nodes',
+    content_rowid='id'
+);
 
 
 CREATE TABLE IF NOT EXISTS edges (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
+    label TEXT NOT NULL,
     properties JSON NOT NULL DEFAULT '{}'
 );
 
 
-CREATE INDEX IF NOT EXISTS idx_edges_name ON edges(name);
+CREATE VIRTUAL TABLE IF NOT EXISTS edges_fts USING fts5(
+    label,
+    properties,
+    content='edges',
+    content_rowid='id'
+);
+
+
+CREATE INDEX IF NOT EXISTS idx_edges_label ON edges(label);
 
 
 CREATE TABLE IF NOT EXISTS edge_connections (

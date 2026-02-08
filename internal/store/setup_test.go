@@ -1,0 +1,24 @@
+package store
+
+import (
+	"context"
+	"log/slog"
+	"os"
+	"testing"
+)
+
+// A no-op handler that discards all log messages.
+type noopHandler struct{}
+
+func (h *noopHandler) Enabled(context.Context, slog.Level) bool  { return false }
+func (h *noopHandler) Handle(context.Context, slog.Record) error { return nil }
+func (h *noopHandler) WithAttrs([]slog.Attr) slog.Handler        { return h }
+func (h *noopHandler) WithGroup(string) slog.Handler             { return h }
+
+// TestMain runs before any tests and applies globally for all tests in the package.
+func TestMain(m *testing.M) {
+	slog.SetDefault(slog.New(&noopHandler{}))
+
+	exitVal := m.Run()
+	os.Exit(exitVal)
+}

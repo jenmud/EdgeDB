@@ -78,7 +78,7 @@ func (b *DB) Tx(ctx context.Context) (*sql.Tx, error) {
 
 // InsertNode inserts a new node into the store.
 func (b *DB) InsertNode(ctx context.Context, name string, props Properties) (Node, error) {
-	nodes, err := b.SyncNodes(ctx, Node{Name: name, Properties: props})
+	nodes, err := b.SyncNodes(ctx, Node{Label: name, Properties: props})
 	if err != nil {
 		return Node{}, err
 	}
@@ -131,14 +131,14 @@ func insertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
 
 	// TODO: this statement should come from the driver used.
 	query := `
-		INSERT INTO nodes (name, properties)
+		INSERT INTO nodes (label, properties)
 		VALUES (?, ?)
-		RETURNING id, name, properties;
+		RETURNING id, label, properties;
 	`
 
-	row := tx.QueryRowContext(ctx, query, n.Name, props)
+	row := tx.QueryRowContext(ctx, query, n.Label, props)
 
-	if err := row.Scan(&node.ID, &node.Name, &props); err != nil {
+	if err := row.Scan(&node.ID, &node.Label, &props); err != nil {
 		return node, err
 	}
 
@@ -160,14 +160,14 @@ func upsertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
 
 	// TODO: this statement should come from the driver used.
 	query := `
-		INSERT OR REPLACE INTO nodes (id, name, properties)
+		INSERT OR REPLACE INTO nodes (id, label, properties)
 		VALUES (?, ?, ?)
-		RETURNING id, name, properties;
+		RETURNING id, label, properties;
 	`
 
-	row := tx.QueryRowContext(ctx, query, n.ID, n.Name, props)
+	row := tx.QueryRowContext(ctx, query, n.ID, n.Label, props)
 
-	if err := row.Scan(&node.ID, &node.Name, &props); err != nil {
+	if err := row.Scan(&node.ID, &node.Label, &props); err != nil {
 		return node, err
 	}
 

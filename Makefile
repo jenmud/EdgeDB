@@ -39,5 +39,9 @@ vendor: tidy
 	$(GO) mod vendor
 
 
+test:
+	CGO_ENABLED=1 $(GO) test -race -failfast -v ./...
+
+
 run:
 	$(GO) run ./cmd/api

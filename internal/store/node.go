@@ -9,7 +9,7 @@ import (
 type Node struct {
 	db         *DB
 	ID         uint64     `db:"id" json:"id"`
-	Name       string     `db:"name" json:"name"`
+	Label      string     `db:"label" json:"label"`
 	Properties Properties `db:"properties" json:"properties"`
 }
 
