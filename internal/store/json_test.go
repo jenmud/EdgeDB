@@ -67,6 +67,17 @@ func TestFlattenMAP(t *testing.T) {
 			wantKeys:   "name meta meta.age meta.height meta.weight meta.hair meta.hair.length",
 			wantValues: "foo 21 100kg 30",
 		},
+		{
+			name: "using-properties-type",
+			m: store.Properties{
+				"name": "foo",
+				"meta": store.Properties{
+					"age": 21,
+				},
+			},
+			wantKeys:   "name meta meta.age",
+			wantValues: "foo 21",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
