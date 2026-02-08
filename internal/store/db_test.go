@@ -135,7 +135,7 @@ func TestDB_SyncNodes(t *testing.T) {
 				t.Errorf("SyncNodes() returned %d nodes, want %d", len(got), len(tt.nodes))
 			}
 
-			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(&Node{}), cmpopts.EquateEmpty()); diff != "" {
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
 				t.Errorf("SyncNodes() = mismatch (-want, +got): \n%s", diff)
 			}
 
