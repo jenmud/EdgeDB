@@ -241,9 +241,3 @@ func (b *DB) Nodes(ctx context.Context, limit uint) ([]Node, error) {
 
 	return nodes, b.db.SelectContext(ctx, &nodes, query, limit)
 }
-
-// Edges returns all the edges in the store.
-func (b *DB) Edges(ctx context.Context) ([]Edge, error) {
-	var edges []Edge
-	return edges, errors.New("not implemented")
-}

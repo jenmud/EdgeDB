@@ -23,8 +23,3 @@ func (n *Node) Bind(store *DB) error {
 func (n *Node) Sync(ctx context.Context) error {
 	return errors.New("not implemented")
 }
-
-// Edges will return all the attached edges.
-func (n *Node) Edges(ctx context.Context, direction Direction, limit uint) ([]Edge, error) {
-	return nil, errors.New("not implemented")
-}
