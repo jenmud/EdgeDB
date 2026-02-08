@@ -77,23 +77,14 @@ func (b *DB) Tx(ctx context.Context) (*sql.Tx, error) {
 }
 
 // InsertNode inserts a new node into the store.
-func (b *DB) InsertNode(ctx context.Context, name string, props Properties) (Node, error) {
-	nodes, err := b.SyncNodes(ctx, Node{Label: name, Properties: props})
-	if err != nil {
-		return Node{}, err
-	}
-
-	if len(nodes) != 1 {
-		return Node{}, sql.ErrNoRows
-	}
-
-	return nodes[0], nil
+func (b *DB) InsertNode(ctx context.Context, name string, props Properties) (*Node, error) {
+	return NewNode(ctx, b, name, props)
 }
 
 // SyncNodes syncs one or more nodes with the store.
 // The node will be create in the store, but if conflict it will do a replace.
-func (b *DB) SyncNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
-	inserted := make([]Node, 0, len(nodes))
+func (b *DB) SyncNodes(ctx context.Context, nodes ...*Node) ([]*Node, error) {
+	inserted := make([]*Node, 0, len(nodes))
 
 	tx, err := b.Tx(ctx)
 	if err != nil {
@@ -103,13 +94,8 @@ func (b *DB) SyncNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
 	defer tx.Rollback()
 
 	for _, n := range nodes {
-		f := insertNode
 
-		if n.ID > 0 {
-			f = upsertNode
-		}
-
-		node, err := f(ctx, tx, n)
+		node, err := upsertNode(ctx, tx, n)
 		if err != nil {
 			return inserted, err
 		}
@@ -120,54 +106,13 @@ func (b *DB) SyncNodes(ctx context.Context, nodes ...Node) ([]Node, error) {
 	return inserted, tx.Commit()
 }
 
-// insertNode inserts a new node to the store.
-func insertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
-	var node Node
-
-	props, err := n.Properties.ToBytes()
-	if err != nil {
-		return node, err
-	}
-
-	// TODO: this statement should come from the driver used.
-	query := `
-		INSERT INTO nodes (label, properties)
-		VALUES (?, ?)
-		RETURNING id, label, properties;
-	`
-
-	row := tx.QueryRowContext(ctx, query, n.Label, props)
-
-	if err := row.Scan(&node.ID, &node.Label, &props); err != nil {
-		return node, err
-	}
-
-	if err := node.Properties.FromBytes(props); err != nil {
-		return node, err
-	}
-
-	fts_query := `
-		INSERT INTO nodes_fts (id, label, prop_keys, prop_values)
-		VALUES (?, ?, ?, ?);
-	`
-
-	keys, values := FlattenMAP(node.Properties)
-	if _, err := tx.ExecContext(ctx, fts_query, node.ID, node.Label, strings.Join(keys, ","), strings.Join(values, ",")); err != nil {
-		slog.Error("failed to insert node FTS", "error", err)
-		// TODO: do we want to fail the whole transaction if the FTS insert fails
-		return node, err
-	}
-
-	return node, err
-}
-
 // upsertNode inserts or create a node in the store using the provided ID attached to the node.
-func upsertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
-	var node Node
+func upsertNode(ctx context.Context, tx *sql.Tx, n *Node) (*Node, error) {
+	node := &Node{}
 
 	props, err := n.Properties.ToBytes()
 	if err != nil {
-		return node, err
+		return nil, err
 	}
 
 	// TODO: this statement should come from the driver used.
@@ -180,11 +125,11 @@ func upsertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
 	row := tx.QueryRowContext(ctx, query, n.ID, n.Label, props)
 
 	if err := row.Scan(&node.ID, &node.Label, &props); err != nil {
-		return node, err
+		return nil, err
 	}
 
 	if err := node.Properties.FromBytes(props); err != nil {
-		return node, err
+		return nil, err
 	}
 
 	fts_query := `
@@ -196,21 +141,21 @@ func upsertNode(ctx context.Context, tx *sql.Tx, n Node) (Node, error) {
 	if _, err := tx.ExecContext(ctx, fts_query, node.ID, node.ID, node.Label, strings.Join(keys, ","), strings.Join(values, ",")); err != nil {
 		slog.Error("failed to update node FTS", "error", err)
 		// TODO: do we want to fail the whole transaction if the FTS insert fails
-		return node, err
+		return nil, err
 	}
 
 	return node, err
 }
 
 // Nodes returns all the nodes in the store.
-func (b *DB) NodeByID(ctx context.Context, id uint64) (Node, error) {
+func (b *DB) NodeByID(ctx context.Context, id uint64) (*Node, error) {
 	query := `
 		SELECT * FROM nodes
 		WHERE id = ?;
 	`
 
-	var node Node
-	err := b.db.GetContext(ctx, &node, query, id)
+	node := &Node{}
+	err := b.db.GetContext(ctx, node, query, id)
 
 	return node, err
 }
@@ -229,10 +174,10 @@ func validateLimit(limit uint) uint {
 
 // Nodes returns all the nodes in the store.
 // limit defaults to `safetyLimit` (see const above) if ==0 or >safetyLimit.
-func (b *DB) Nodes(ctx context.Context, limit uint) ([]Node, error) {
+func (b *DB) Nodes(ctx context.Context, limit uint) ([]*Node, error) {
 
 	limit = validateLimit(limit)
-	nodes := make([]Node, 0, limit)
+	nodes := make([]*Node, 0, limit)
 
 	query := `
 		SELECT * FROM nodes

@@ -8,7 +8,7 @@ import (
 )
 
 // preload helper for filling in the DB
-func preload(t *testing.T, db *DB, n ...Node) {
+func preload(t *testing.T, db *DB, n ...*Node) {
 	tx, err := db.Tx(t.Context())
 	if err != nil {
 		t.Fatal(err.Error())
@@ -17,7 +17,10 @@ func preload(t *testing.T, db *DB, n ...Node) {
 	defer tx.Rollback()
 
 	for _, p := range n {
-		if _, err := insertNode(t.Context(), tx, p); err != nil {
+		if p == nil {
+			continue
+		}
+		if _, err := upsertNode(t.Context(), tx, p); err != nil {
 			t.Fatal(err.Error())
 		}
 	}
@@ -32,20 +35,20 @@ func TestDB_SyncNodes(t *testing.T) {
 		name    string
 		driver  string
 		dsn     string
-		preload []Node
-		nodes   []Node
-		want    []Node
+		preload []*Node
+		nodes   []*Node
+		want    []*Node
 		wantErr bool
 	}{
 		{
 			name:   "single-new-node",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			nodes: []Node{
-				{Label: "foo", Properties: Properties{"age": 21}},
+			nodes: []*Node{
+				&Node{Label: "foo", Properties: Properties{"age": 21}},
 			},
-			want: []Node{
-				{ID: 1, Label: "foo", Properties: Properties{"age": float64(21)}},
+			want: []*Node{
+				&Node{ID: 1, Label: "foo", Properties: Properties{"age": float64(21)}},
 			},
 			wantErr: false,
 		},
@@ -53,14 +56,14 @@ func TestDB_SyncNodes(t *testing.T) {
 			name:   "single-update-node",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			preload: []Node{
-				{ID: 1, Label: "foo", Properties: Properties{"age": 21}},
+			preload: []*Node{
+				&Node{ID: 1, Label: "foo", Properties: Properties{"age": 21}},
 			},
-			nodes: []Node{
-				{ID: 1, Label: "foo", Properties: Properties{"age": 22}},
+			nodes: []*Node{
+				&Node{ID: 1, Label: "foo", Properties: Properties{"age": 22}},
 			},
-			want: []Node{
-				{ID: 1, Label: "foo", Properties: Properties{"age": float64(22)}},
+			want: []*Node{
+				&Node{ID: 1, Label: "foo", Properties: Properties{"age": float64(22)}},
 			},
 			wantErr: false,
 		},
@@ -68,15 +71,15 @@ func TestDB_SyncNodes(t *testing.T) {
 			name:   "multiple-new-node",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			nodes: []Node{
-				{Label: "foo", Properties: Properties{"age": 21}},
-				{Label: "bar", Properties: Properties{"age": 22}},
-				{Label: "foobar"},
+			nodes: []*Node{
+				&Node{Label: "foo", Properties: Properties{"age": 21}},
+				&Node{Label: "bar", Properties: Properties{"age": 22}},
+				&Node{Label: "foobar"},
 			},
-			want: []Node{
-				{ID: 1, Label: "foo", Properties: Properties{"age": float64(21)}},
-				{ID: 2, Label: "bar", Properties: Properties{"age": float64(22)}},
-				{ID: 3, Label: "foobar"},
+			want: []*Node{
+				&Node{ID: 1, Label: "foo", Properties: Properties{"age": float64(21)}},
+				&Node{ID: 2, Label: "bar", Properties: Properties{"age": float64(22)}},
+				&Node{ID: 3, Label: "foobar"},
 			},
 			wantErr: false,
 		},
@@ -84,18 +87,18 @@ func TestDB_SyncNodes(t *testing.T) {
 			name:   "multiple-mixed-new-and-update-node",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			preload: []Node{
-				{ID: 10, Label: "foobar"},
+			preload: []*Node{
+				&Node{ID: 10, Label: "foobar"},
 			},
-			nodes: []Node{
-				{Label: "foo", Properties: Properties{"age": 21}},
-				{ID: 10, Label: "foobar-updated"},
-				{Label: "bar", Properties: Properties{"age": 22}},
+			nodes: []*Node{
+				&Node{Label: "foo", Properties: Properties{"age": 21}},
+				&Node{ID: 10, Label: "foobar-updated"},
+				&Node{Label: "bar", Properties: Properties{"age": 22}},
 			},
-			want: []Node{
-				{ID: 2, Label: "foo", Properties: Properties{"age": float64(21)}},
-				{ID: 10, Label: "foobar-updated"},
-				{ID: 11, Label: "bar", Properties: Properties{"age": float64(22)}},
+			want: []*Node{
+				&Node{ID: 2, Label: "foo", Properties: Properties{"age": float64(21)}},
+				&Node{ID: 10, Label: "foobar-updated"},
+				&Node{ID: 11, Label: "bar", Properties: Properties{"age": float64(22)}},
 			},
 			wantErr: false,
 		},
@@ -132,72 +135,8 @@ func TestDB_SyncNodes(t *testing.T) {
 				t.Errorf("SyncNodes() returned %d nodes, want %d", len(got), len(tt.nodes))
 			}
 
-			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(&Node{}), cmpopts.EquateEmpty()); diff != "" {
 				t.Errorf("SyncNodes() = mismatch (-want, +got): \n%s", diff)
-			}
-
-		})
-	}
-}
-
-func Test_insertNode(t *testing.T) {
-	tests := []struct {
-		name    string // description of this test case
-		driver  string
-		dsn     string
-		n       Node
-		want    Node
-		wantErr bool
-	}{
-		{
-			name:    "new-node",
-			driver:  "sqlite",
-			dsn:     ":memory:",
-			n:       Node{Label: "foo", Properties: Properties{"name": "foo", "meta": map[string]int{"age": 21}}},
-			want:    Node{ID: 1, Label: "foo", Properties: Properties{"name": "foo", "meta": map[string]any{"age": float64(21)}}},
-			wantErr: false,
-		},
-		{
-			name:    "new-node-empty-props",
-			driver:  "sqlite",
-			dsn:     ":memory:",
-			n:       Node{Label: "foo"},
-			want:    Node{ID: 1, Label: "foo"},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
-			db, err := New(t.Context(), tt.driver, tt.dsn)
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
-			defer db.Close()
-
-			tx, err := db.Tx(t.Context())
-			if err != nil {
-				t.Fatal(err.Error())
-			}
-
-			defer tx.Rollback()
-
-			got, gotErr := insertNode(t.Context(), tx, tt.n)
-			if gotErr != nil {
-				if !tt.wantErr {
-					t.Errorf("insertNode() failed: %v", gotErr)
-				}
-				return
-			}
-
-			if tt.wantErr {
-				t.Fatal("insertNode() succeeded unexpectedly")
-			}
-
-			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
-				t.Errorf("insertNodes() = mismatch (-want, +got): \n%s", diff)
 			}
 
 		})
@@ -209,48 +148,48 @@ func Test_upsertNode(t *testing.T) {
 		name    string // description of this test case
 		driver  string
 		dsn     string
-		preload []Node
-		n       Node
-		want    Node
+		preload []*Node
+		n       *Node
+		want    *Node
 		wantErr bool
 	}{
 		{
 			name:    "new-node-ID-0",
 			driver:  "sqlite",
 			dsn:     ":memory:",
-			n:       Node{Label: "foo", Properties: Properties{"age": 21}},
-			want:    Node{ID: 0, Label: "foo", Properties: Properties{"age": float64(21)}},
+			n:       &Node{Label: "foo", Properties: Properties{"age": 21}},
+			want:    &Node{ID: 0, Label: "foo", Properties: Properties{"age": float64(21)}},
 			wantErr: false,
 		},
 		{
 			name:    "new-node-ID-100",
 			driver:  "sqlite",
 			dsn:     ":memory:",
-			n:       Node{ID: 100, Label: "foo", Properties: Properties{"age": 21}},
-			want:    Node{ID: 100, Label: "foo", Properties: Properties{"age": float64(21)}},
+			n:       &Node{ID: 100, Label: "foo", Properties: Properties{"age": 21}},
+			want:    &Node{ID: 100, Label: "foo", Properties: Properties{"age": float64(21)}},
 			wantErr: false,
 		},
 		{
 			name:   "update-node",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			preload: []Node{
+			preload: []*Node{
 				{ID: 100, Label: "foo", Properties: Properties{"age": 21}},
 			},
-			n:       Node{ID: 100, Label: "foo2", Properties: Properties{"age": 22}},
-			want:    Node{ID: 100, Label: "foo2", Properties: Properties{"age": float64(22)}},
+			n:       &Node{ID: 100, Label: "foo2", Properties: Properties{"age": 22}},
+			want:    &Node{ID: 100, Label: "foo2", Properties: Properties{"age": float64(22)}},
 			wantErr: false,
 		},
 		{
 			name:   "new-node-smaller-id",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			preload: []Node{
+			preload: []*Node{
 				{ID: 2, Label: "foobar"},
 				{ID: 100, Label: "foo", Properties: Properties{"age": 21}},
 			},
-			n:       Node{ID: 1, Label: "bar"},
-			want:    Node{ID: 1, Label: "bar"},
+			n:       &Node{ID: 1, Label: "bar"},
+			want:    &Node{ID: 1, Label: "bar"},
 			wantErr: false,
 		},
 	}
@@ -299,10 +238,10 @@ func TestDB_InsertNode(t *testing.T) {
 		name     string // description of this test case
 		driver   string
 		dsn      string
-		preload  []Node
+		preload  []*Node
 		nodeName string
 		props    Properties
-		want     Node
+		want     *Node
 		wantErr  bool
 	}{
 		{
@@ -311,17 +250,17 @@ func TestDB_InsertNode(t *testing.T) {
 			dsn:      ":memory:",
 			nodeName: "Foo",
 			props:    Properties{"age": 21},
-			want:     Node{ID: 1, Label: "Foo", Properties: Properties{"age": float64(21)}},
+			want:     &Node{ID: 1, Label: "Foo", Properties: Properties{"age": float64(21)}},
 			wantErr:  false,
 		},
 		{
 			name:     "second-node",
 			driver:   "sqlite",
 			dsn:      ":memory:",
-			preload:  []Node{{ID: 1, Label: "Bar"}},
+			preload:  []*Node{{ID: 1, Label: "Bar"}},
 			nodeName: "Foo",
 			props:    Properties{"age": 21},
-			want:     Node{ID: 2, Label: "Foo", Properties: Properties{"age": float64(21)}},
+			want:     &Node{ID: 2, Label: "Foo", Properties: Properties{"age": float64(21)}},
 			wantErr:  false,
 		},
 	}
@@ -360,32 +299,32 @@ func TestDB_NodeByID(t *testing.T) {
 		name    string // description of this test case
 		driver  string
 		dsn     string
-		preload []Node
+		preload []*Node
 		id      uint64
-		want    Node
+		want    *Node
 		wantErr bool
 	}{
 		{
 			name:   "node-found",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			preload: []Node{
+			preload: []*Node{
 				{ID: 1, Label: "foo"},
 				{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
 			},
 			id:      2,
-			want:    Node{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
+			want:    &Node{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
 			wantErr: false,
 		},
 		{
 			name:   "node-not-found",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			preload: []Node{
+			preload: []*Node{
 				{ID: 1, Label: "foo"},
 			},
 			id:      2,
-			want:    Node{},
+			want:    &Node{},
 			wantErr: true,
 		},
 	}
@@ -424,30 +363,30 @@ func TestDB_Nodes(t *testing.T) {
 		name    string // description of this test case
 		driver  string
 		dsn     string
-		preload []Node
+		preload []*Node
 		limit   uint
-		want    []Node
+		want    []*Node
 		wantErr bool
 	}{
 		{
 			name:    "no-nodes-in-store",
 			driver:  "sqlite",
 			dsn:     ":memory:",
-			preload: []Node{},
-			want:    []Node{},
+			preload: []*Node{},
+			want:    []*Node{},
 			wantErr: false,
 		},
 		{
 			name:   "multiple-nodes",
 			driver: "sqlite",
 			dsn:    ":memory:",
-			preload: []Node{
-				{ID: 1, Label: "foo"},
-				{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
+			preload: []*Node{
+				&Node{ID: 1, Label: "foo"},
+				&Node{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
 			},
-			want: []Node{
-				{ID: 1, Label: "foo"},
-				{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
+			want: []*Node{
+				&Node{ID: 1, Label: "foo"},
+				&Node{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
 			},
 			wantErr: false,
 		},
@@ -456,14 +395,14 @@ func TestDB_Nodes(t *testing.T) {
 			driver: "sqlite",
 			dsn:    ":memory:",
 			limit:  2,
-			preload: []Node{
-				{ID: 1, Label: "foo"},
-				{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
-				{ID: 3, Label: "foobar"},
+			preload: []*Node{
+				&Node{ID: 1, Label: "foo"},
+				&Node{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": 21}}},
+				&Node{ID: 3, Label: "foobar"},
 			},
-			want: []Node{
-				{ID: 1, Label: "foo"},
-				{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
+			want: []*Node{
+				&Node{ID: 1, Label: "foo"},
+				&Node{ID: 2, Label: "bar", Properties: Properties{"meta": map[string]any{"age": float64(21)}}},
 			},
 			wantErr: false,
 		},
@@ -481,13 +420,13 @@ func TestDB_Nodes(t *testing.T) {
 			got, gotErr := b.Nodes(t.Context(), tt.limit)
 			if gotErr != nil {
 				if !tt.wantErr {
-					t.Errorf("NodeByID() failed: %v", gotErr)
+					t.Errorf("Nodes() failed: %v", gotErr)
 				}
 				return
 			}
 
 			if tt.wantErr {
-				t.Fatal("NodeByID() succeeded unexpectedly")
+				t.Fatal("Nodes() succeeded unexpectedly")
 			}
 
 			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(Node{}), cmpopts.EquateEmpty()); diff != "" {
