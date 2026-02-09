@@ -1,11 +1,12 @@
-package store_test
+package common_test
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/models"
+	"github.com/jenmud/edgedb/pkg/common"
 )
 
 func TestFlattenMAP(t *testing.T) {
@@ -68,9 +69,9 @@ func TestFlattenMAP(t *testing.T) {
 		},
 		{
 			name: "using-properties-type",
-			m: store.Properties{
+			m: models.Properties{
 				"name": "foo",
-				"meta": store.Properties{
+				"meta": models.Properties{
 					"age": 21,
 				},
 			},
@@ -80,7 +81,7 @@ func TestFlattenMAP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotKeys, gotValues := store.FlattenMAP(tt.m)
+			gotKeys, gotValues := common.FlattenMAP(tt.m)
 
 			diffKeys := cmp.Diff(
 				gotKeys,
@@ -164,7 +165,7 @@ func TestKeys(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got := store.Keys(tt.m)
+			got := common.Keys(tt.m)
 
 			diff := cmp.Diff(
 				got,
@@ -259,7 +260,7 @@ func TestValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got := store.Values(tt.m)
+			got := common.Values(tt.m)
 
 			diff := cmp.Diff(
 				got,

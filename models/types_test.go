@@ -1,4 +1,4 @@
-package store_test
+package models_test
 
 import (
 	"bytes"
@@ -6,31 +6,31 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/models"
 )
 
 func TestProperties_ToBytes(t *testing.T) {
 	tests := []struct {
 		name    string // description of this test case
-		p       store.Properties
+		p       models.Properties
 		want    json.RawMessage
 		wantErr bool
 	}{
 		{
 			name:    "flat-map",
-			p:       store.Properties{"name": "foo", "age": 21},
+			p:       models.Properties{"name": "foo", "age": 21},
 			want:    []byte(`{"name": "foo", "age": 21}`),
 			wantErr: false,
 		},
 		{
 			name:    "nested-properties",
-			p:       store.Properties{"name": "foo", "meta": store.Properties{"age": 21}},
+			p:       models.Properties{"name": "foo", "meta": models.Properties{"age": 21}},
 			want:    []byte(`{"name": "foo", "meta": {"age": 21}}`),
 			wantErr: false,
 		},
 		{
 			name:    "nested-map",
-			p:       store.Properties{"name": "foo", "meta": map[string]int{"age": 21}},
+			p:       models.Properties{"name": "foo", "meta": map[string]int{"age": 21}},
 			want:    []byte(`{"name": "foo", "meta": {"age": 21}}`),
 			wantErr: false,
 		},
@@ -62,32 +62,32 @@ func TestProperties_FromBytes(t *testing.T) {
 	tests := []struct {
 		name    string // description of this test case
 		b       json.RawMessage
-		want    store.Properties
+		want    models.Properties
 		wantErr bool
 	}{
 		{
 			name:    "flat-map",
 			b:       []byte(`{"name": "foo", "age": 21}`),
-			want:    store.Properties{"name": "foo", "age": 21},
+			want:    models.Properties{"name": "foo", "age": 21},
 			wantErr: false,
 		},
 		{
 			name:    "nested-properties",
 			b:       []byte(`{"name": "foo", "meta": {"age": 21}}`),
-			want:    store.Properties{"name": "foo", "meta": map[string]any{"age": 21}},
+			want:    models.Properties{"name": "foo", "meta": map[string]any{"age": 21}},
 			wantErr: false,
 		},
 		{
 			name:    "nested-map",
 			b:       []byte(`{"name": "foo", "meta": {"age": 21}}`),
-			want:    store.Properties{"name": "foo", "meta": map[string]any{"age": 21}},
+			want:    models.Properties{"name": "foo", "meta": map[string]any{"age": 21}},
 			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var p store.Properties
+			var p models.Properties
 
 			gotErr := p.FromBytes(tt.b)
 			if gotErr != nil {
@@ -124,25 +124,25 @@ func TestProperties_Scan(t *testing.T) {
 	tests := []struct {
 		name    string // description of this test case
 		src     any
-		want    store.Properties
+		want    models.Properties
 		wantErr bool
 	}{
 		{
 			name:    "proper-JSON-bytes",
 			src:     []byte(`{"name": "foo"}`),
-			want:    store.Properties{"name": "foo"},
+			want:    models.Properties{"name": "foo"},
 			wantErr: false,
 		},
 		{
 			name:    "proper-JSON-string",
 			src:     `{"name": "foo"}`,
-			want:    store.Properties{"name": "foo"},
+			want:    models.Properties{"name": "foo"},
 			wantErr: false,
 		},
 		{
 			name:    "proper-JSON-RawMessage",
 			src:     json.RawMessage(`{"name": "foo"}`),
-			want:    store.Properties{"name": "foo"},
+			want:    models.Properties{"name": "foo"},
 			wantErr: false,
 		},
 		{
@@ -154,7 +154,7 @@ func TestProperties_Scan(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var p store.Properties
+			var p models.Properties
 
 			gotErr := p.Scan(tt.src)
 			if gotErr != nil {

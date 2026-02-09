@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/jenmud/edgedb/internal/server"
-	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/internal/store/sqlite"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -86,13 +86,19 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	db, err := store.New(ctx, "", "") // let it load up from environment variables.
+	dns := os.Getenv("EDGEDB_STORE_DSN")
+	if dns == "" {
+		panic("EDGEDB_STORE_DSN environment variable is not set, eg: :memory: or ./edgedb.db")
+	}
+
+	db, err := sqlite.New(ctx, dns)
 	if err != nil {
-		slog.Error("error setting up store", slog.String("reason", err.Error()))
 		panic(fmt.Sprintf("setting up the store error: %s", err))
 	}
 
-	server := server.NewServer(os.Getenv("EDGEDB_WEB_ADDRESS"), db)
+	defer db.Close()
+
+	server := server.NewServer(os.Getenv("EDGEDB_WEB_ADDRESS"))
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
