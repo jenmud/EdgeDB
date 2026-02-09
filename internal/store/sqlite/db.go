@@ -3,13 +3,17 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"embed"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
 
 	"github.com/jenmud/edgedb/models"
 	"github.com/jenmud/edgedb/pkg/common"
+	"modernc.org/sqlite"
 	_ "modernc.org/sqlite"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -41,6 +45,8 @@ func New(ctx context.Context, dns string) (*sql.DB, error) {
 	)
 
 	slog.Debug("attached to store")
+	registerFuncs()
+
 	return db, ApplyMigrations(ctx, db)
 }
 
@@ -74,7 +80,60 @@ func ApplyMigrations(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-// TODO: add in a custom function to sqlite to extract the property keys and values, then we should be able to use triggers to update the fts
+// registerFuncs registers custom SQL functions for SQLite. It will panic if the registration fails, so it should be called during initialization.
+func registerFuncs() {
+	slog.Debug("registering custom sql functions")
+
+	sqlite.MustRegisterDeterministicScalarFunction(
+		"json_extract_keys",
+		1,
+		func(ctx *sqlite.FunctionContext, args []driver.Value) (driver.Value, error) {
+			var payload json.RawMessage
+
+			switch argTyped := args[0].(type) {
+			case string:
+				payload = json.RawMessage([]byte(argTyped))
+			case []byte:
+				payload = json.RawMessage(argTyped)
+			default:
+				return nil, fmt.Errorf("expected argument to be a string, got: %T", argTyped)
+			}
+
+			props := make(map[string]any)
+			if err := json.Unmarshal(payload, &props); err != nil {
+				return nil, fmt.Errorf("error unmarshalling JSON: %w", err)
+			}
+
+			keys := common.Keys(props)
+			return strings.Join(keys, ","), nil
+		},
+	)
+
+	sqlite.MustRegisterDeterministicScalarFunction(
+		"json_extract_values",
+		1,
+		func(ctx *sqlite.FunctionContext, args []driver.Value) (driver.Value, error) {
+			var payload json.RawMessage
+
+			switch argTyped := args[0].(type) {
+			case string:
+				payload = json.RawMessage([]byte(argTyped))
+			case []byte:
+				payload = json.RawMessage(argTyped)
+			default:
+				return nil, fmt.Errorf("expected argument to be a string, got: %T", argTyped)
+			}
+
+			props := make(map[string]any)
+			if err := json.Unmarshal(payload, &props); err != nil {
+				return nil, fmt.Errorf("error unmarshalling JSON: %w", err)
+			}
+
+			values := common.Values(props)
+			return strings.Join(values, ","), nil
+		},
+	)
+}
 
 // UpsertNodes inserts or creates one or more nodes.
 func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.Node, error) {
@@ -86,7 +145,7 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 
 		props, err := n.Properties.ToBytes()
 		if err != nil {
-			return nil, err
+			return nodes, err
 		}
 
 		query := `
@@ -98,11 +157,11 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 		row := tx.QueryRowContext(ctx, query, n.ID, n.Label, props)
 
 		if err := row.Scan(&node.ID, &node.Label, &props); err != nil {
-			return nil, err
+			return nodes, err
 		}
 
 		if err := node.Properties.FromBytes(props); err != nil {
-			return nil, err
+			return nodes, err
 		}
 
 		fts_query := `
@@ -112,8 +171,7 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 
 		keys, values := common.FlattenMAP(node.Properties)
 		if _, err := tx.ExecContext(ctx, fts_query, node.ID, node.ID, node.Label, strings.Join(keys, ","), strings.Join(values, ",")); err != nil {
-			slog.Error("failed to update node FTS", "error", err)
-			return nil, err
+			return nodes, err
 		}
 
 		nodes[i] = node
