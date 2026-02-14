@@ -164,16 +164,6 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 			return nodes, err
 		}
 
-		fts_query := `
-			DELETE from nodes_fts where id = ?;
-			INSERT INTO nodes_fts(id, label, prop_keys, prop_values) VALUES(?, ?, ?, ?);
-		`
-
-		keys, values := common.FlattenMAP(node.Properties)
-		if _, err := tx.ExecContext(ctx, fts_query, node.ID, node.ID, node.Label, strings.Join(keys, ","), strings.Join(values, ",")); err != nil {
-			return nodes, err
-		}
-
 		nodes[i] = node
 	}
 
