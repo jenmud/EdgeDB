@@ -20,6 +20,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(
 
 
 -- after a INSERT, update the fts table with the new node extracting the property keys and values.
+-- NOTE: json_extract_keys and json_extract_values is a custom registered function.
 CREATE TRIGGER IF NOT EXISTS node_fts_insert
 AFTER INSERT ON nodes
 FOR EACH ROW
@@ -30,6 +31,7 @@ END;
 
 
 -- if using INSERT OR REPLACE, SQLite will do a delete and then an insert. So this delete trigger will be fired.
+-- NOTE: json_extract_keys and json_extract_values is a custom registered function.
 CREATE TRIGGER IF NOT EXISTS nodes_after_delete
 AFTER DELETE ON nodes
 BEGIN
