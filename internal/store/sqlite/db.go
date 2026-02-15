@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 
 	"github.com/jenmud/edgedb/models"
 	"github.com/jenmud/edgedb/pkg/common"
@@ -23,6 +24,7 @@ import (
 
 //go:embed "migrations/*.sql"
 var migrations embed.FS
+var once sync.Once
 
 // New creates a new Query instance with the provided database connection.
 func New(ctx context.Context, dns string) (*sql.DB, error) {
@@ -45,7 +47,7 @@ func New(ctx context.Context, dns string) (*sql.DB, error) {
 	)
 
 	slog.Debug("attached to store")
-	registerFuncs()
+	once.Do(registerFuncs)
 
 	return db, ApplyMigrations(ctx, db)
 }
@@ -148,13 +150,25 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 			return nodes, err
 		}
 
-		query := `
-			INSERT OR REPLACE INTO nodes (id, label, properties)
-			VALUES (?, ?, ?)
-			RETURNING id, label, properties;
-		`
+		var row *sql.Row
 
-		row := tx.QueryRowContext(ctx, query, n.ID, n.Label, props)
+		if n.ID == 0 {
+			query := `
+				INSERT INTO nodes (label, properties)
+				VALUES (?, ?)
+				RETURNING id, label, properties;
+			`
+
+			row = tx.QueryRowContext(ctx, query, n.Label, props)
+		} else {
+			query := `
+				INSERT OR REPLACE INTO nodes (id, label, properties)
+				VALUES (?, ?, ?)
+				RETURNING id, label, properties;
+			`
+
+			row = tx.QueryRowContext(ctx, query, n.ID, n.Label, props)
+		}
 
 		if err := row.Scan(&node.ID, &node.Label, &props); err != nil {
 			return nodes, err
