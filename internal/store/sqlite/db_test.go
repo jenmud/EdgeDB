@@ -1,6 +1,7 @@
 package sqlite_test
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -8,6 +9,13 @@ import (
 	"github.com/jenmud/edgedb/internal/store/sqlite"
 	"github.com/jenmud/edgedb/models"
 )
+
+func preload(t *testing.T, tx *sql.Tx, nodes ...models.Node) {
+	_, err := sqlite.UpsertNodes(t.Context(), tx, nodes...)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestUpsertNodes(t *testing.T) {
 	tests := []struct {
@@ -42,7 +50,7 @@ func TestUpsertNodes(t *testing.T) {
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "bar", "age": 21, "meta": map[string]string{"hair": "brown"}}},
 			},
 			want: []models.Node{
-				{ID: 1, Label: "person", Properties: models.Properties{"name": "bar", "age": 21, "meta": map[string]string{"hair": "brown"}}},
+				{ID: 1, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21), "meta": map[string]any{"hair": string("brown")}}},
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "foo"}},
 			},
 			wantErr: false,
@@ -64,6 +72,8 @@ func TestUpsertNodes(t *testing.T) {
 			}
 
 			defer tx.Rollback()
+
+			preload(t, tx, tt.preload...)
 
 			got, gotErr := sqlite.UpsertNodes(ctx, tx, tt.n...)
 			if gotErr != nil {
