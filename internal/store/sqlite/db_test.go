@@ -1,23 +1,23 @@
 package sqlite_test
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/jenmud/edgedb/internal/store"
 	"github.com/jenmud/edgedb/internal/store/sqlite"
 	"github.com/jenmud/edgedb/models"
 )
 
-func preload(t *testing.T, tx *sql.Tx, nodes ...models.Node) {
-	_, err := sqlite.UpsertNodes(t.Context(), tx, nodes...)
+func preload(t *testing.T, store *sqlite.Store, nodes ...models.Node) {
+	_, err := store.UpsertNodes(t.Context(), nodes...)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestUpsertNodes(t *testing.T) {
+func TestStore_UpsertNodes(t *testing.T) {
 	tests := []struct {
 		name    string // description of this test case
 		dsn     string
@@ -64,33 +64,19 @@ func TestUpsertNodes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
 
-			db, err := sqlite.New(ctx, tt.dsn)
+			store, err := sqlite.New(t.Context(), tt.dsn)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			tx, err := db.BeginTx(ctx, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			preload(t, store, tt.preload...)
 
-			t.Cleanup(func() { tx.Rollback() })
-
-			preload(t, tx, tt.preload...)
-
-			got, gotErr := sqlite.UpsertNodes(ctx, tx, tt.n...)
+			got, gotErr := store.UpsertNodes(ctx, tt.n...)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("UpsertNodes() failed: %v", gotErr)
 				}
 				return
-			}
-
-			err = tx.Commit()
-			if err != nil {
-				if !tt.wantErr {
-					t.Errorf("UpsertNodes() failed: %v", err)
-				}
 			}
 
 			if tt.wantErr {
@@ -118,8 +104,7 @@ func TestNodesTermSearch(t *testing.T) {
 		name    string // description of this test case
 		dsn     string
 		preload []models.Node
-		term    string
-		limit   int
+		args    store.NodesTermSearchArgs
 		want    []models.Node
 		wantErr bool
 	}{
@@ -134,7 +119,7 @@ func TestNodesTermSearch(t *testing.T) {
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			term:    "name",
+			args:    store.NodesTermSearchArgs{Term: "name"},
 			wantErr: false,
 		},
 		{
@@ -147,7 +132,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			term:    "bar",
+			args:    store.NodesTermSearchArgs{Term: "bar"},
 			wantErr: false,
 		},
 		{
@@ -160,7 +145,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			term:    "prop_keys:age",
+			args:    store.NodesTermSearchArgs{Term: "prop_keys:age"},
 			wantErr: false,
 		},
 		{
@@ -175,7 +160,7 @@ func TestNodesTermSearch(t *testing.T) {
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			term:    "prop_values:foo OR prop_values:bar",
+			args:    store.NodesTermSearchArgs{Term: "prop_values:foo OR prop_values:bar"},
 			wantErr: false,
 		},
 		{
@@ -189,7 +174,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 3, Label: "dog", Properties: models.Properties{"short": true, "name": "socks"}},
 			},
-			term:    "label:dog",
+			args:    store.NodesTermSearchArgs{Term: "label:dog"},
 			wantErr: false,
 		},
 		{
@@ -203,7 +188,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 			},
-			term:    "label:person AND foo",
+			args:    store.NodesTermSearchArgs{Term: "label:person AND foo"},
 			wantErr: false,
 		},
 		{
@@ -218,8 +203,7 @@ func TestNodesTermSearch(t *testing.T) {
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			term:    "prop_keys:name",
-			limit:   2,
+			args:    store.NodesTermSearchArgs{Term: "prop_keys:name", Limit: 2},
 			wantErr: false,
 		},
 	}
@@ -228,24 +212,14 @@ func TestNodesTermSearch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
 
-			db, err := sqlite.New(ctx, tt.dsn)
+			store, err := sqlite.New(ctx, tt.dsn)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			tx, err := db.BeginTx(ctx, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			preload(t, store, tt.preload...)
 
-			preload(t, tx, tt.preload...)
-
-			if err := tx.Commit(); err != nil {
-				tx.Rollback()
-				t.Fatal(err)
-			}
-
-			got, gotErr := sqlite.NodesTermSearch(ctx, db, tt.term, tt.limit)
+			got, gotErr := store.NodesTermSearch(ctx, tt.args)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("NodesTermSearch() failed: %v", gotErr)

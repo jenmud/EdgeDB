@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/jenmud/edgedb/internal/store"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -14,11 +15,12 @@ const defaultAddress = ":8080"
 
 type Server struct {
 	address string
+	store   store.Store
 }
 
 // NewServer creates and configures a new HTTP server.
 // If the address is not provided, it will default to envvar "EDGEDB_WEB_ADDRESS", or ":8080" if the envvar is not set.
-func NewServer(address string) *http.Server {
+func NewServer(address string, s store.Store) *http.Server {
 	if address == "" {
 		address = os.Getenv("EDGEDB_WEB_ADDRESS")
 		if address == "" {
@@ -28,6 +30,7 @@ func NewServer(address string) *http.Server {
 
 	NewServer := &Server{
 		address: address,
+		store:   s,
 	}
 
 	// Declare Server config

@@ -91,14 +91,14 @@ func main() {
 		panic("EDGEDB_STORE_DSN environment variable is not set, eg: :memory: or ./edgedb.db")
 	}
 
-	db, err := sqlite.New(ctx, dns)
+	store, err := sqlite.New(ctx, dns)
 	if err != nil {
 		panic(fmt.Sprintf("setting up the store error: %s", err))
 	}
 
-	defer db.Close()
+	defer store.Close()
 
-	server := server.NewServer(os.Getenv("EDGEDB_WEB_ADDRESS"))
+	server := server.NewServer(os.Getenv("EDGEDB_WEB_ADDRESS"), store)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)

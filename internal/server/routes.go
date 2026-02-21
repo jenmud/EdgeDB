@@ -1,9 +1,15 @@
 package server
 
 import (
+	"encoding/json"
+	"log/slog"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/jenmud/edgedb/cmd/web"
+	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/models"
 )
 
 // RegisterRoutes sets up the HTTP routes for the server.
@@ -12,6 +18,44 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	fileServer := http.FileServer(http.FS(web.Static))
 	mux.Handle("/static/", fileServer)
+
+	// /api/v1/nodes?term=...&limit=1000
+	slog.Info("registered route", slog.String("route", "/api/v1/nodes"), slog.String("query-params", strings.Join([]string{"term", "limit"}, ",")))
+	mux.HandleFunc("GET /api/v1/nodes", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		term := r.URL.Query().Get("term")
+		limit := 1000
+
+		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
+			limit = l
+		}
+
+		var (
+			nodes []models.Node
+			err   error
+		)
+
+		if term == "" {
+			nodes, err = s.store.Nodes(ctx, store.NodesArgs{Limit: limit})
+		} else {
+			args := store.NodesTermSearchArgs{Term: term, Limit: limit}
+			nodes, err = s.store.NodesTermSearch(ctx, args)
+		}
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(nodes); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
 
 	// Wrap the mux with CORS middleware
 	return s.corsMiddleware(mux)

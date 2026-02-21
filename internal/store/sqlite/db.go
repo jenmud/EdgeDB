@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jenmud/edgedb/internal/store"
 	"github.com/jenmud/edgedb/models"
 	"github.com/jenmud/edgedb/pkg/common"
 	"modernc.org/sqlite"
@@ -26,12 +27,16 @@ import (
 var migrations embed.FS
 var once sync.Once
 
-// New creates a new Query instance with the provided database connection.
-func New(ctx context.Context, dns string) (*sql.DB, error) {
+// New creates a new store instance with the provided database connection.
+func New(ctx context.Context, dns string) (*Store, error) {
+	s := &Store{}
+
 	db, err := sql.Open("sqlite", dns)
 	if err != nil {
 		return nil, err
 	}
+
+	s.db = db
 
 	// call SetMaxOpenConns to 1 for SQLite to avoid "database is locked" errors on the original underlying DB
 	db.SetMaxOpenConns(1)
@@ -49,7 +54,7 @@ func New(ctx context.Context, dns string) (*sql.DB, error) {
 	slog.Debug("attached to store")
 	once.Do(registerFuncs)
 
-	return db, ApplyMigrations(ctx, db)
+	return s, ApplyMigrations(ctx, s.db)
 }
 
 // ApplyMigrations applies database migrations from the embedded filesystem.
@@ -137,8 +142,36 @@ func registerFuncs() {
 	)
 }
 
+// Store is the underlying sqlite store.
+type Store struct {
+	db *sql.DB
+}
+
+// Close closed the store.
+func (s *Store) Close() error {
+	if s.db != nil {
+		return s.db.Close()
+	}
+	return nil
+}
+
+// Tx returns a new transaction.
+func (s *Store) Tx(ctx context.Context) (*sql.Tx, error) {
+	if s.db == nil {
+		return nil, errors.New("no attached database found")
+	}
+	return s.db.BeginTx(ctx, nil)
+}
+
 // UpsertNodes inserts or creates one or more nodes.
-func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.Node, error) {
+func (s *Store) UpsertNodes(ctx context.Context, n ...models.Node) ([]models.Node, error) {
+	tx, err := s.Tx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback()
+
 	nodes := make([]models.Node, len(n))
 
 	for i, n := range n {
@@ -185,13 +218,16 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 		nodes[i] = node
 	}
 
-	return nodes, nil
+	return nodes, tx.Commit()
 }
 
+// DefaultLimit is the default limit of return items to return.
+const DefaultLimit int = 1000
+
 // NodesTermSearch applies the search term and returns nodes with match. Limit defaults to 1000 if limit is 0
-func NodesTermSearch(ctx context.Context, db *sql.DB, term string, limit int) ([]models.Node, error) {
-	if limit == 0 {
-		limit = 1000
+func (s *Store) NodesTermSearch(ctx context.Context, args store.NodesTermSearchArgs) ([]models.Node, error) {
+	if args.Limit == 0 {
+		args.Limit = DefaultLimit
 	}
 
 	query := `
@@ -203,7 +239,44 @@ func NodesTermSearch(ctx context.Context, db *sql.DB, term string, limit int) ([
 	LIMIT ?;
 	`
 
-	rows, err := db.QueryContext(ctx, query, term, limit)
+	rows, err := s.db.QueryContext(ctx, query, args.Term, args.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes := []models.Node{}
+
+	for rows.Next() {
+		n := models.Node{}
+
+		var props []byte
+		if err := rows.Scan(&n.ID, &n.Label, &props); err != nil {
+			return nodes, err
+		}
+
+		if err := n.Properties.FromBytes(props); err != nil {
+			return nodes, err
+		}
+
+		nodes = append(nodes, n)
+	}
+
+	return nodes, nil
+}
+
+// Nodes applies the search for all nodes in the store.
+func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node, error) {
+	if args.Limit == 0 {
+		args.Limit = DefaultLimit
+	}
+
+	query := `
+	SELECT n.id, n.label, n.properties
+	FROM nodes n
+	LIMIT ?;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, args.Limit)
 	if err != nil {
 		return nil, err
 	}
