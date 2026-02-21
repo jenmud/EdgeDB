@@ -187,3 +187,37 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 
 	return nodes, nil
 }
+
+// NodesTermSearch applies the search term and returns nodes with match.
+func NodesTermSearch(ctx context.Context, db *sql.DB, term string) ([]models.Node, error) {
+	query := `
+	SELECT n.id, n.label, n.properties
+	FROM nodes n
+	JOIN nodes_fts ON n.id = nodes_fts.id
+	WHERE nodes_fts MATCH (?);
+	`
+
+	rows, err := db.QueryContext(ctx, query, term)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes := []models.Node{}
+
+	for rows.Next() {
+		n := models.Node{}
+
+		var props []byte
+		if err := rows.Scan(&n.ID, &n.Label, &props); err != nil {
+			return nodes, err
+		}
+
+		if err := n.Properties.FromBytes(props); err != nil {
+			return nodes, err
+		}
+
+		nodes = append(nodes, n)
+	}
+
+	return nodes, nil
+}
