@@ -43,10 +43,13 @@ func TestUpsertNodes(t *testing.T) {
 			name: "update existing",
 			dsn:  ":memory:",
 			preload: []models.Node{
+				// insert a node which should start with ID 1.
 				{Label: "person", Properties: models.Properties{"name": "bar", "age": 4}},
 			},
 			n: []models.Node{
+				// insert another new node which should land up with the ID 2.
 				{Label: "person", Properties: models.Properties{"name": "foo"}},
+				// here we are updating the preloaded node.
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "bar", "age": 21, "meta": map[string]string{"hair": "brown"}}},
 			},
 			want: []models.Node{
