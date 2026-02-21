@@ -119,6 +119,7 @@ func TestNodesTermSearch(t *testing.T) {
 		dsn     string
 		preload []models.Node
 		term    string
+		limit   int
 		want    []models.Node
 		wantErr bool
 	}{
@@ -191,6 +192,36 @@ func TestNodesTermSearch(t *testing.T) {
 			term:    "label:dog",
 			wantErr: false,
 		},
+		{
+			name: "nodes with label `person` and name `foo`",
+			dsn:  ":memory:",
+			preload: []models.Node{
+				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
+				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": 21}},
+				{ID: 3, Label: "dog", Properties: models.Properties{"short": true, "name": "socks"}},
+			},
+			want: []models.Node{
+				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
+			},
+			term:    "label:person AND foo",
+			wantErr: false,
+		},
+		{
+			name: "nodes limited to 2",
+			dsn:  ":memory:",
+			preload: []models.Node{
+				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
+				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": 21}},
+				{ID: 3, Label: "dog", Properties: models.Properties{"short": true, "name": "socks"}},
+			},
+			want: []models.Node{
+				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
+				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
+			},
+			term:    "prop_keys:name",
+			limit:   2,
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -214,7 +245,7 @@ func TestNodesTermSearch(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			got, gotErr := sqlite.NodesTermSearch(ctx, db, tt.term)
+			got, gotErr := sqlite.NodesTermSearch(ctx, db, tt.term, tt.limit)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("NodesTermSearch() failed: %v", gotErr)

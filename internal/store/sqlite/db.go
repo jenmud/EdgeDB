@@ -188,16 +188,22 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 	return nodes, nil
 }
 
-// NodesTermSearch applies the search term and returns nodes with match.
-func NodesTermSearch(ctx context.Context, db *sql.DB, term string) ([]models.Node, error) {
+// NodesTermSearch applies the search term and returns nodes with match. Limit defaults to 1000 if limit is 0
+func NodesTermSearch(ctx context.Context, db *sql.DB, term string, limit int) ([]models.Node, error) {
+	if limit == 0 {
+		limit = 1000
+	}
+
 	query := `
 	SELECT n.id, n.label, n.properties
 	FROM nodes n
 	JOIN nodes_fts ON n.id = nodes_fts.id
-	WHERE nodes_fts MATCH (?);
+	WHERE nodes_fts MATCH (?)
+	ORDER BY BM25(nodes_fts)
+	LIMIT ?;
 	`
 
-	rows, err := db.QueryContext(ctx, query, term)
+	rows, err := db.QueryContext(ctx, query, term, limit)
 	if err != nil {
 		return nil, err
 	}
