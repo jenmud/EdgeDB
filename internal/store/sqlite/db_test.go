@@ -95,8 +95,8 @@ func TestUpsertNodes(t *testing.T) {
 			}
 
 			diff := cmp.Diff(
-				got,
 				tt.want,
+				got,
 				cmpopts.EquateEmpty(),
 				cmpopts.SortSlices(
 					func(a, b models.Node) bool { return int(a.ID) < int(b.ID) },

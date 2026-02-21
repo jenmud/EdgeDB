@@ -150,16 +150,23 @@ func UpsertNodes(ctx context.Context, tx *sql.Tx, n ...models.Node) ([]models.No
 			return nodes, err
 		}
 
-		var id any = node.ID
+		// We need to pass in a null ID id the node ID 0
+		// so that the database can assign a new ID.
+		var id *uint64
 
-		if n.ID == 0 {
+		if n.ID <= 0 {
+			// DB will assign a new ID
 			id = nil
+		} else {
+			// DB will either insert with this ID or update an existing Node if the ID conflicts
+			id = &n.ID
 		}
 
 		query := `
 			INSERT INTO nodes (id, label, properties)
 			VALUES (?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
+				id = excluded.id,
 				label = excluded.label,
 				properties = excluded.properties
 			RETURNING id, label, properties;
