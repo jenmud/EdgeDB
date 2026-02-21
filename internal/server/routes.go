@@ -24,7 +24,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /api/v1/nodes", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		term := r.URL.Query().Get("term")
+		term := strings.Trim(r.URL.Query().Get("term"), "\"")
 		limit := 1000
 
 		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
