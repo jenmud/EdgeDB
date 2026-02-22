@@ -8,13 +8,17 @@ import (
 	"strings"
 
 	"github.com/jenmud/edgedb/cmd/web"
+	_ "github.com/jenmud/edgedb/docs"
 	"github.com/jenmud/edgedb/internal/store"
 	"github.com/jenmud/edgedb/models"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // RegisterRoutes sets up the HTTP routes for the server.
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	fileServer := http.FileServer(http.FS(web.Static))
 	mux.Handle("/static/", fileServer)

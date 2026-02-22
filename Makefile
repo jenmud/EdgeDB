@@ -43,5 +43,9 @@ test:
 	CGO_ENABLED=1 $(GO) test -race -failfast -v ./...
 
 
-run:
+generate:
+	$(GO) tool swag init --parseInternal --dir ./cmd/api,./internal,./models --output ./docs
+
+
+run: generate
 	$(GO) run ./cmd/api

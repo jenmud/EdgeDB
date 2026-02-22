@@ -79,7 +79,10 @@ func gracefulShutdown(ctx context.Context, apiServer *http.Server, done chan boo
 	done <- true
 }
 
-// main is the entry point of the application.
+// @Title EdgeDB API
+// @Version 1.0
+// @Description EdgeDB API server
+// @BasePath /
 func main() {
 	setupLogging()
 
