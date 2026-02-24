@@ -55,6 +55,11 @@ func New(ctx context.Context, dns string) (*Store, error) {
 	once.Do(registerFuncs)
 
 	return s, ApplyMigrations(ctx, s.db)
+	//if err := ApplyMigrations(ctx, s.db); err != nil {
+	//	return s, err
+	//}
+
+	//return s, s.ReindexNodes(ctx)
 }
 
 // ApplyMigrations applies database migrations from the embedded filesystem.
@@ -299,4 +304,21 @@ func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node,
 	}
 
 	return nodes, nil
+}
+
+// ReindexNodes will trigger a re-index of all the nodes.
+func (s *Store) ReindexNodes(ctx context.Context) error {
+	tx, err := s.Tx(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, "INSERT INTO nodes_fts(nodes_fts) VALUES('optimize');")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
