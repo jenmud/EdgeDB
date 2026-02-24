@@ -7,3 +7,7 @@ All data was parsed from https://github.com/BradyStephenson/bible-data/tree/main
 
 Nodes that have been scraped is directly from [commandments](https://raw.githubusercontent.com/BradyStephenson/bible-data/refs/heads/main/BibleData-Commandments.csv)
 
+```bash
+$ python3 convert.py https://raw.githubusercontent.com/BradyStephenson/bible-data/refs/heads/main/BibleData-Commandments.csv commandments.csv
+Done. Wrote transformed CSV to: commandments.csv
+```
