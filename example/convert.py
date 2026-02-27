@@ -6,12 +6,14 @@ from io import StringIO
 
 
 def main():
+    nodes = []
+
     if len(sys.argv) < 2:
-        print("Usage: python transform_commandments.py <raw_csv_url> [output_file]")
+        print("Usage: python transform_commandments.py <raw_csv_url> [api]")
         sys.exit(1)
 
     raw_url = sys.argv[1]
-    output_file = sys.argv[2] if len(sys.argv) > 2 else "transformed.csv"
+    api = sys.argv[2] if len(sys.argv) > 2 else "http://localhost:8080/api/v1/nodes"
 
     # Fetch CSV from URL
     try:
@@ -23,26 +25,34 @@ def main():
 
     reader = csv.DictReader(StringIO(csv_data))
 
-    with open(output_file, "w", newline="", encoding="utf-8") as f_out:
-        writer = csv.writer(f_out)
+    ident = 1
+    for row in reader:
+        # All other columns become JSON properties
+        props = {
+            k: v for k, v in row.items()
+            if k != "commandment_number"
+        }
 
-        # Header (adjust/remove if your importer doesn't want one)
-        writer.writerow(["id", "label", "properties"])
+        nodes.append({"id": ident, "label": "commandment", "properties": props})
+        ident += 1
 
-        ident = 1
-        for row in reader:
-            # All other columns become JSON properties
-            props = {
-                k: v for k, v in row.items()
-                if k != "commandment_number"
-            }
 
-            props_json = json.dumps(props, ensure_ascii=False)
+    print("uploading to api")
+    body = {"nodes": nodes}
+    payload = json.dumps(body).encode("utf-8")
 
-            writer.writerow([ident, "command", props_json])
-            ident += 1
+    req = urllib.request.Request(
+        url=api,
+        data=payload,
+        method="PUT",
+        headers={"Content-Type": "application/json", "Content-Length": str(len(payload))},
+    )
 
-    print(f"Done. Wrote transformed CSV to: {output_file}")
+    with urllib.request.urlopen(req) as resp:
+        resp_body = resp.read().decode("utf-8")
+        print("Status:", resp.status)
+
+    print(f"Done")
 
 
 if __name__ == "__main__":

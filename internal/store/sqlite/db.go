@@ -54,12 +54,7 @@ func New(ctx context.Context, dns string) (*Store, error) {
 	slog.Debug("attached to store")
 	once.Do(registerFuncs)
 
-	//return s, ApplyMigrations(ctx, s.db)
-	if err := ApplyMigrations(ctx, s.db); err != nil {
-		return s, err
-	}
-
-	return s, s.ReindexNodes(ctx)
+	return s, ApplyMigrations(ctx, s.db)
 }
 
 // ApplyMigrations applies database migrations from the embedded filesystem.
