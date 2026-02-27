@@ -54,12 +54,12 @@ func New(ctx context.Context, dns string) (*Store, error) {
 	slog.Debug("attached to store")
 	once.Do(registerFuncs)
 
-	return s, ApplyMigrations(ctx, s.db)
-	//if err := ApplyMigrations(ctx, s.db); err != nil {
-	//	return s, err
-	//}
+	//return s, ApplyMigrations(ctx, s.db)
+	if err := ApplyMigrations(ctx, s.db); err != nil {
+		return s, err
+	}
 
-	//return s, s.ReindexNodes(ctx)
+	return s, s.ReindexNodes(ctx)
 }
 
 // ApplyMigrations applies database migrations from the embedded filesystem.
@@ -314,6 +314,11 @@ func (s *Store) ReindexNodes(ctx context.Context) error {
 	}
 
 	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, "INSERT INTO nodes_fts(nodes_fts) VALUES('rebuild');")
+	if err != nil {
+		return err
+	}
 
 	_, err = tx.ExecContext(ctx, "INSERT INTO nodes_fts(nodes_fts) VALUES('optimize');")
 	if err != nil {

@@ -47,5 +47,10 @@ generate:
 	$(GO) tool swag init --parseInternal --dir ./cmd/api,./internal,./models --output ./docs
 
 
-run: generate
+fix:
+	@echo "running go fix a few times"
+	@$(GO) fix ./... && $(GO) fix ./... && $(GO) fix ./...
+
+
+run: generate fix
 	$(GO) run ./cmd/api

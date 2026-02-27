@@ -12,6 +12,13 @@ definitions:
   models.Properties:
     additionalProperties: {}
     type: object
+  server.PUTNodesReq:
+    properties:
+      nodes:
+        items:
+          $ref: '#/definitions/models.Node'
+        type: array
+    type: object
 info:
   contact: {}
   description: EdgeDB API server
@@ -48,6 +55,31 @@ paths:
         "500":
           description: Internal server error
       summary: Search and return nodes
+      tags:
+      - nodes
+    put:
+      description: Add/update on or more nodes.
+      parameters:
+      - description: One or more nodes to add/update
+        in: body
+        name: nodes
+        required: true
+        schema:
+          $ref: '#/definitions/server.PUTNodesReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of nodes
+          schema:
+            items:
+              $ref: '#/definitions/models.Node'
+            type: array
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+      summary: Add/update one or more nodes.
       tags:
       - nodes
 swagger: "2.0"

@@ -60,6 +60,44 @@ const docTemplate = `{
                         "description": "Internal server error"
                     }
                 }
+            },
+            "put": {
+                "description": "Add/update on or more nodes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "nodes"
+                ],
+                "summary": "Add/update one or more nodes.",
+                "parameters": [
+                    {
+                        "description": "One or more nodes to add/update",
+                        "name": "nodes",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.PUTNodesReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of nodes",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Node"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
             }
         }
     },
@@ -81,6 +119,17 @@ const docTemplate = `{
         "models.Properties": {
             "type": "object",
             "additionalProperties": {}
+        },
+        "server.PUTNodesReq": {
+            "type": "object",
+            "properties": {
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Node"
+                    }
+                }
+            }
         }
     }
 }`
