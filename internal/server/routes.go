@@ -59,7 +59,7 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 // @Tags nodes
 // @Produce json
 // @Param term query string false "search term" default("")
-// @Param limit query int false "limit results returned" minimum(1) maximum(1000) default(1000)
+// @Param limit query int false "limit results returned" minimum(1) default(1000)
 // @Success 200 {array} models.Node "List of nodes"
 // @Failure 400 "Bad request"
 // @Failure 500 "Internal server error"

@@ -37,7 +37,6 @@ paths:
       - default: 1000
         description: limit results returned
         in: query
-        maximum: 1000
         minimum: 1
         name: limit
         type: integer
