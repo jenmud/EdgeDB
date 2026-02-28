@@ -19,6 +19,15 @@ type NodesTermSearchArgs struct {
 
 	// Limit is the max number of items to return.
 	Limit int
+
+	// SnippetTokens is the max tokens in the returned snipped text.
+	SnippetTokens int
+
+	// SnippetStart is the opening tag.
+	SnippetStart string
+
+	// SnippetEnd is the ending tag.
+	SnippetEnd string
 }
 
 // NodesArgs are the search arguments for nodes in the store.

@@ -58,7 +58,10 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 // @Description Search and return nodes.
 // @Tags nodes
 // @Produce json
-// @Param term query string false "search term" default("")
+// @Param term query string false "search term" default()
+// @Param snippetStart query string false "snippet start" default(<span class="text-red-500">)
+// @Param snippetEnd query string false "snippet start" default(</span>)
+// @Param tokens query int false "snippet tokens" minimum(1) maximum(64) default(10)
 // @Param limit query int false "limit results returned" minimum(1) default(1000)
 // @Success 200 {array} models.Node "List of nodes"
 // @Failure 400 "Bad request"
@@ -68,10 +71,18 @@ func (s *Server) GETNodes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	term := strings.Trim(r.URL.Query().Get("term"), "\"")
+	snippetStart := r.URL.Query().Get("snippetStart")
+	snippetEnd := r.URL.Query().Get("snippetEnd")
+
 	limit := 1000
+	tokens := 10
 
 	if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
 		limit = l
+	}
+
+	if s, err := strconv.Atoi(r.URL.Query().Get("tokens")); err == nil {
+		tokens = s
 	}
 
 	var (
@@ -82,7 +93,7 @@ func (s *Server) GETNodes(w http.ResponseWriter, r *http.Request) {
 	if term == "" {
 		nodes, err = s.store.Nodes(ctx, store.NodesArgs{Limit: limit})
 	} else {
-		args := store.NodesTermSearchArgs{Term: term, Limit: limit}
+		args := store.NodesTermSearchArgs{Term: term, Limit: limit, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
 		nodes, err = s.store.NodesTermSearch(ctx, args)
 	}
 

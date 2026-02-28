@@ -36,11 +36,28 @@ paths:
     get:
       description: Search and return nodes.
       parameters:
-      - default: '""'
+      - default: ""
         description: search term
         in: query
         name: term
         type: string
+      - default: <span class="text-red-500">
+        description: snippet start
+        in: query
+        name: snippetStart
+        type: string
+      - default: </span>
+        description: snippet start
+        in: query
+        name: snippetEnd
+        type: string
+      - default: 10
+        description: snippet tokens
+        in: query
+        maximum: 64
+        minimum: 1
+        name: tokens
+        type: integer
       - default: 1000
         description: limit results returned
         in: query

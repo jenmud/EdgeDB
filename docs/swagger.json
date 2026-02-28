@@ -21,9 +21,32 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "\"\"",
+                        "default": "",
                         "description": "search term",
                         "name": "term",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\u003cspan class=\"text-red-500\"\u003e",
+                        "description": "snippet start",
+                        "name": "snippetStart",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\u003c/span\u003e",
+                        "description": "snippet start",
+                        "name": "snippetEnd",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 64,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "snippet tokens",
+                        "name": "tokens",
                         "in": "query"
                     },
                     {

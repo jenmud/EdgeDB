@@ -231,8 +231,24 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.NodesTermSearchA
 		args.Limit = DefaultLimit
 	}
 
+	if args.SnippetTokens < 0 {
+		args.SnippetTokens = 10
+	}
+
+	if args.SnippetTokens > 64 {
+		args.SnippetTokens = 64
+	}
+
+	if args.SnippetStart == "" {
+		args.SnippetStart = `<span class="text-red-500">`
+	}
+
+	if args.SnippetEnd == "" {
+		args.SnippetEnd = `</span>`
+	}
+
 	query := `
-	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties, snippet(fts, -1, '<span class="text-red-500">', '</span>', ' ... ', 10) as snippet
+	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
 	FROM fts
 	JOIN nodes n ON n.id = fts.id
 	WHERE fts.type = 'node' AND fts MATCH ?
@@ -240,7 +256,7 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.NodesTermSearchA
 	LIMIT ?;
 	`
 
-	rows, err := s.db.QueryContext(ctx, query, args.Term, args.Limit)
+	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.Limit)
 	if err != nil {
 		return nil, err
 	}
