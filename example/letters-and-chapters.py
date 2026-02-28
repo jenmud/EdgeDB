@@ -100,12 +100,11 @@ def main():
 
     books = get_books()
     nodes = []
-    node_id = 0
 
     for name, abbr, chapters, testament, order in books:
         # Book node
         nodes.append(Node(
-            node_id,
+            0,
             "letter",
             {
                 "name": name,
@@ -116,12 +115,11 @@ def main():
                 "type": "book"
             }
         ).to_dict())
-        node_id += 1
 
         # Chapter nodes
         for chapter in range(1, chapters + 1):
             nodes.append(Node(
-                node_id,
+                0,
                 "chapter",
                 {
                     "book": name,
@@ -131,7 +129,6 @@ def main():
                     "type": "chapter"
                 }
             ).to_dict())
-            node_id += 1
 
     print("uploading to api")
     body = {"nodes": nodes}
