@@ -104,6 +104,9 @@ const docTemplate = `{
         "models.Node": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -112,6 +115,13 @@ const docTemplate = `{
                 },
                 "properties": {
                     "$ref": "#/definitions/models.Properties"
+                },
+                "snippet": {
+                    "description": "this is a special field show a small snippet of the match terms",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },

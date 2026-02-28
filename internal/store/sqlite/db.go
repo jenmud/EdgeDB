@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jenmud/edgedb/internal/store"
 	"github.com/jenmud/edgedb/models"
@@ -231,11 +232,11 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.NodesTermSearchA
 	}
 
 	query := `
-	SELECT n.id, n.label, n.properties
-	FROM nodes n
-	JOIN nodes_fts ON n.id = nodes_fts.id
-	WHERE nodes_fts MATCH (?)
-	ORDER BY BM25(nodes_fts)
+	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties, snippet(fts, -1, '<span class="text-red-500">', '</span>', ' ... ', 10) as snippet
+	FROM fts
+	JOIN nodes n ON n.id = fts.id
+	WHERE fts.type = 'node' AND fts MATCH ?
+	ORDER BY bm25(fts)
 	LIMIT ?;
 	`
 
@@ -249,14 +250,20 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.NodesTermSearchA
 	for rows.Next() {
 		n := models.Node{}
 
+		var createdAt int64
+		var updatedAt int64
+
 		var props []byte
-		if err := rows.Scan(&n.ID, &n.Label, &props); err != nil {
+		if err := rows.Scan(&n.ID, &createdAt, &updatedAt, &n.Label, &props, &n.Snippet); err != nil {
 			return nodes, err
 		}
 
 		if err := n.Properties.FromBytes(props); err != nil {
 			return nodes, err
 		}
+
+		n.CreatedAt = time.Unix(createdAt, 0)
+		n.UpdatedAt = time.Unix(updatedAt, 0)
 
 		nodes = append(nodes, n)
 	}
@@ -271,7 +278,7 @@ func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node,
 	}
 
 	query := `
-	SELECT n.id, n.label, n.properties
+	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties
 	FROM nodes n
 	LIMIT ?;
 	`
@@ -286,8 +293,11 @@ func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node,
 	for rows.Next() {
 		n := models.Node{}
 
+		var createdAt int64
+		var updatedAt int64
+
 		var props []byte
-		if err := rows.Scan(&n.ID, &n.Label, &props); err != nil {
+		if err := rows.Scan(&n.ID, &createdAt, &updatedAt, &n.Label, &props); err != nil {
 			return nodes, err
 		}
 
@@ -295,30 +305,11 @@ func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node,
 			return nodes, err
 		}
 
+		n.CreatedAt = time.Unix(createdAt, 0)
+		n.UpdatedAt = time.Unix(updatedAt, 0)
+
 		nodes = append(nodes, n)
 	}
 
 	return nodes, nil
-}
-
-// ReindexNodes will trigger a re-index of all the nodes.
-func (s *Store) ReindexNodes(ctx context.Context) error {
-	tx, err := s.Tx(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
-	_, err = tx.ExecContext(ctx, "INSERT INTO nodes_fts(nodes_fts) VALUES('rebuild');")
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.ExecContext(ctx, "INSERT INTO nodes_fts(nodes_fts) VALUES('optimize');")
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
 }
