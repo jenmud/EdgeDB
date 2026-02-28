@@ -49,7 +49,6 @@ def main():
     )
 
     with urllib.request.urlopen(req) as resp:
-        resp_body = resp.read().decode("utf-8")
         print("Status:", resp.status)
 
     print(f"Done")
