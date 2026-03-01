@@ -414,7 +414,7 @@ func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	}
 
 	query := `
-	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
+	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.weight, e.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
 	FROM fts
 	JOIN edges e ON e.id = fts.id
 	WHERE fts.type = 'edge' AND fts MATCH ?
@@ -436,7 +436,7 @@ func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 		var updatedAt int64
 
 		var props []byte
-		if err := rows.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &props, &e.Snippet); err != nil {
+		if err := rows.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &e.Weight, &props, &e.Snippet); err != nil {
 			return edges, err
 		}
 
@@ -460,7 +460,7 @@ func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge,
 	}
 
 	query := `
-	SELECT e.id, e.created_at, e.updated_at,, e.from_id, e.label, e.to_id, e.properties
+	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.weight, e.properties
 	FROM edges e
 	LIMIT ?;
 	`
@@ -479,7 +479,7 @@ func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge,
 		var updatedAt int64
 
 		var props []byte
-		if err := rows.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &props); err != nil {
+		if err := rows.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &e.Weight, &props); err != nil {
 			return edges, err
 		}
 
