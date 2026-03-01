@@ -1,5 +1,27 @@
 basePath: /
 definitions:
+  models.Edge:
+    properties:
+      created_at:
+        type: string
+      from_id:
+        type: integer
+      id:
+        type: integer
+      label:
+        type: string
+      properties:
+        $ref: '#/definitions/models.Properties'
+      snippet:
+        description: this is a special field show a small snippet of the match terms
+        type: string
+      to_id:
+        type: integer
+      updated_at:
+        type: string
+      weight:
+        type: integer
+    type: object
   models.Node:
     properties:
       created_at:
@@ -19,6 +41,13 @@ definitions:
   models.Properties:
     additionalProperties: {}
     type: object
+  server.PUTEdgesReq:
+    properties:
+      edges:
+        items:
+          $ref: '#/definitions/models.Edge'
+        type: array
+    type: object
   server.PUTNodesReq:
     properties:
       nodes:
@@ -32,6 +61,79 @@ info:
   title: EdgeDB API
   version: "1.0"
 paths:
+  /api/v1/edges:
+    get:
+      description: Search and return edges.
+      parameters:
+      - default: ""
+        description: search term
+        in: query
+        name: term
+        type: string
+      - default: <span class="text-red-500">
+        description: snippet start
+        in: query
+        name: snippetStart
+        type: string
+      - default: </span>
+        description: snippet start
+        in: query
+        name: snippetEnd
+        type: string
+      - default: 10
+        description: snippet tokens
+        in: query
+        maximum: 64
+        minimum: 1
+        name: tokens
+        type: integer
+      - default: 1000
+        description: limit results returned
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of edges
+          schema:
+            items:
+              $ref: '#/definitions/models.Edge'
+            type: array
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+      summary: Search and return edges
+      tags:
+      - edges
+    put:
+      description: Add/update on or more edges.
+      parameters:
+      - description: One or more nodes to add/update
+        in: body
+        name: nodes
+        required: true
+        schema:
+          $ref: '#/definitions/server.PUTEdgesReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of edges
+          schema:
+            items:
+              $ref: '#/definitions/models.Edge'
+            type: array
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+      summary: Add/update one or more edges.
+      tags:
+      - edges
   /api/v1/nodes:
     get:
       description: Search and return nodes.

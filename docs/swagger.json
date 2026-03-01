@@ -8,6 +8,113 @@
     },
     "basePath": "/",
     "paths": {
+        "/api/v1/edges": {
+            "get": {
+                "description": "Search and return edges.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "edges"
+                ],
+                "summary": "Search and return edges",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "",
+                        "description": "search term",
+                        "name": "term",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\u003cspan class=\"text-red-500\"\u003e",
+                        "description": "snippet start",
+                        "name": "snippetStart",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\u003c/span\u003e",
+                        "description": "snippet start",
+                        "name": "snippetEnd",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 64,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "snippet tokens",
+                        "name": "tokens",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1000,
+                        "description": "limit results returned",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of edges",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Edge"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+            "put": {
+                "description": "Add/update on or more edges.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "edges"
+                ],
+                "summary": "Add/update one or more edges.",
+                "parameters": [
+                    {
+                        "description": "One or more nodes to add/update",
+                        "name": "nodes",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.PUTEdgesReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of edges",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Edge"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
         "/api/v1/nodes": {
             "get": {
                 "description": "Search and return nodes.",
@@ -117,6 +224,39 @@
         }
     },
     "definitions": {
+        "models.Edge": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "from_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "properties": {
+                    "$ref": "#/definitions/models.Properties"
+                },
+                "snippet": {
+                    "description": "this is a special field show a small snippet of the match terms",
+                    "type": "string"
+                },
+                "to_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.Node": {
             "type": "object",
             "properties": {
@@ -144,6 +284,17 @@
         "models.Properties": {
             "type": "object",
             "additionalProperties": {}
+        },
+        "server.PUTEdgesReq": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Edge"
+                    }
+                }
+            }
         },
         "server.PUTNodesReq": {
             "type": "object",
