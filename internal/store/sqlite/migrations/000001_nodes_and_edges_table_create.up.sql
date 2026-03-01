@@ -56,8 +56,17 @@ CREATE TABLE IF NOT EXISTS edges (
     updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
     label TEXT NOT NULL,
     properties JSON NOT NULL DEFAULT '{}',
-    weight INTEGER NOT NULL DEFAULT 0
+    weight INTEGER NOT NULL DEFAULT 0,
+    from_id INTEGER NOT NULL, 
+    to_id INTEGER NOT NULL, 
+    FOREIGN KEY (from_id) REFERENCES nodes(id) ON DELETE CASCADE,
+    FOREIGN KEY (to_id) REFERENCES nodes(id) ON DELETE CASCADE
 );
+
+
+CREATE INDEX idx_edges_from   ON edges(from_id);
+CREATE INDEX idx_edges_to     ON edges(to_id);
+CREATE INDEX idx_edges_flt    ON edges(from_id, label, to_id);
 
 
 CREATE TRIGGER IF NOT EXISTS after_edge_update
@@ -89,19 +98,3 @@ END;
 
 
 CREATE INDEX IF NOT EXISTS idx_edges_label ON edges(label);
-
-
-CREATE TABLE IF NOT EXISTS edge_connections (
-    edge_id INTEGER NOT NULL,
-    from_node_id INTEGER NOT NULL,
-    to_node_id INTEGER NOT NULL,
-    FOREIGN KEY (edge_id) REFERENCES edges(id) ON DELETE CASCADE,
-    FOREIGN KEY (from_node_id) REFERENCES nodes(id) ON DELETE CASCADE,
-    FOREIGN KEY (to_node_id) REFERENCES nodes(id) ON DELETE CASCADE,
-    PRIMARY KEY (edge_id, from_node_id, to_node_id)
-);
-
-
-CREATE INDEX IF NOT EXISTS idx_edge_connections_edge_id ON edge_connections(edge_id);
-CREATE INDEX IF NOT EXISTS idx_edge_connections_from_node_id ON edge_connections(from_node_id);
-CREATE INDEX IF NOT EXISTS idx_edge_connections_to_node_id ON edge_connections(to_node_id);

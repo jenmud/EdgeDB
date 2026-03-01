@@ -1,12 +1,16 @@
+DROP TABLE IF EXISTS fts;
 DROP TABLE IF EXISTS nodes;
-DROP TABLE IF EXISTS nodes_fts;
-DROP TRIGGER IF EXISTS nodes_after_delete;
-DROP INDEX IF EXISTS idx_nodes_label;
 DROP TABLE IF EXISTS edges;
-DROP TABLE IF EXISTS edges_fts;
-DROP TRIGGER IF EXISTS edges_after_delete;
+
+DROP INDEX IF EXISTS idx_nodes_label;
 DROP INDEX IF EXISTS idx_edges_label;
-DROP TABLE IF EXISTS edge_connections;
-DROP INDEX IF EXISTS idx_edge_connections_edge_id;
-DROP INDEX IF EXISTS idx_edge_connections_from_node_id;
-DROP INDEX IF EXISTS idx_edge_connections_to_node_id;
+DROP INDEX IF EXISTS idx_edges_from;
+DROP INDEX IF EXISTS idx_edges_to;
+DROP INDEX IF EXISTS idx_edges_flt;
+
+DROP TRIGGER IF EXISTS after_node_update;
+DROP TRIGGER IF EXISTS node_fts_insert;
+DROP TRIGGER IF EXISTS nodes_after_delete;
+DROP TRIGGER IF EXISTS after_edge_update;
+DROP TRIGGER IF EXISTS edge_fts_insert;
+DROP TRIGGER IF EXISTS edges_after_delete;

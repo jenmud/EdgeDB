@@ -104,7 +104,7 @@ func TestNodesTermSearch(t *testing.T) {
 		name    string // description of this test case
 		dsn     string
 		preload []models.Node
-		args    store.NodesTermSearchArgs
+		args    store.TermSearchArgs
 		want    []models.Node
 		wantErr bool
 	}{
@@ -119,7 +119,7 @@ func TestNodesTermSearch(t *testing.T) {
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			args:    store.NodesTermSearchArgs{Term: "name"},
+			args:    store.TermSearchArgs{Term: "name"},
 			wantErr: false,
 		},
 		{
@@ -132,7 +132,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			args:    store.NodesTermSearchArgs{Term: "bar"},
+			args:    store.TermSearchArgs{Term: "bar"},
 			wantErr: false,
 		},
 		{
@@ -145,7 +145,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			args:    store.NodesTermSearchArgs{Term: "prop_keys:age"},
+			args:    store.TermSearchArgs{Term: "prop_keys:age"},
 			wantErr: false,
 		},
 		{
@@ -160,7 +160,7 @@ func TestNodesTermSearch(t *testing.T) {
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			args:    store.NodesTermSearchArgs{Term: "prop_values:foo OR prop_values:bar"},
+			args:    store.TermSearchArgs{Term: "prop_values:foo OR prop_values:bar"},
 			wantErr: false,
 		},
 		{
@@ -174,7 +174,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 3, Label: "dog", Properties: models.Properties{"short": true, "name": "socks"}},
 			},
-			args:    store.NodesTermSearchArgs{Term: "label:dog"},
+			args:    store.TermSearchArgs{Term: "label:dog"},
 			wantErr: false,
 		},
 		{
@@ -188,7 +188,7 @@ func TestNodesTermSearch(t *testing.T) {
 			want: []models.Node{
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 			},
-			args:    store.NodesTermSearchArgs{Term: "label:person AND foo"},
+			args:    store.TermSearchArgs{Term: "label:person AND foo"},
 			wantErr: false,
 		},
 		{
@@ -203,7 +203,7 @@ func TestNodesTermSearch(t *testing.T) {
 				{ID: 1, Label: "person", Properties: models.Properties{"name": "foo"}},
 				{ID: 2, Label: "person", Properties: models.Properties{"name": "bar", "age": float64(21)}},
 			},
-			args:    store.NodesTermSearchArgs{Term: "prop_keys:name", Limit: 2},
+			args:    store.TermSearchArgs{Term: "prop_keys:name", Limit: 2},
 			wantErr: false,
 		},
 	}

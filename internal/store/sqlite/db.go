@@ -226,7 +226,7 @@ func (s *Store) UpsertNodes(ctx context.Context, n ...models.Node) ([]models.Nod
 const DefaultLimit int = 1000
 
 // NodesTermSearch applies the search term and returns nodes with match. Limit defaults to 1000 if limit is 0
-func (s *Store) NodesTermSearch(ctx context.Context, args store.NodesTermSearchArgs) ([]models.Node, error) {
+func (s *Store) NodesTermSearch(ctx context.Context, args store.TermSearchArgs) ([]models.Node, error) {
 	if args.Limit == 0 {
 		args.Limit = DefaultLimit
 	}
@@ -328,4 +328,170 @@ func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node,
 	}
 
 	return nodes, nil
+}
+
+// UpsertEdges inserts or creates one or more edges.
+func (s *Store) UpsertEdges(ctx context.Context, e ...models.Edge) ([]models.Edge, error) {
+	tx, err := s.Tx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback()
+
+	edges := make([]models.Edge, len(e))
+
+	for i, e := range e {
+
+		edge := models.Edge{}
+
+		props, err := e.Properties.ToBytes()
+		if err != nil {
+			return edges, err
+		}
+
+		// We need to pass in a null ID id the node ID 0
+		// so that the database can assign a new ID.
+		var id *uint64
+
+		if e.ID <= 0 {
+			// DB will assign a new ID
+			id = nil
+		} else {
+			// DB will either insert with this ID or update an existing Node if the ID conflicts
+			id = &e.ID
+		}
+
+		query := `
+			INSERT INTO edges (id, from_id, label, to_id, weight, properties)
+			VALUES (?, ?, ?, ?, ?, ?)
+			ON CONFLICT(id) DO UPDATE SET
+				id = excluded.id,
+				from_id = excluded.from_id,
+				label = excluded.label,
+				to_id = excluded.to_id,
+				weight = excluded.weight,
+				properties = excluded.properties
+			RETURNING id, from_id, label, to_id, weight, properties;
+		`
+
+		row := tx.QueryRowContext(ctx, query, id, e.From, e.Label, e.To, e.Weight, props)
+
+		if err := row.Scan(&edge.ID, &edge.From, &edge.Label, &edge.To, &edge.Weight, &props); err != nil {
+			return edges, err
+		}
+
+		if err := edge.Properties.FromBytes(props); err != nil {
+			return edges, err
+		}
+
+		edges[i] = edge
+	}
+
+	return edges, tx.Commit()
+}
+
+// EdgesTermSearch applies the search term and returns edges with match. Limit defaults to 1000 if limit is 0
+func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) ([]models.Edge, error) {
+	if args.Limit == 0 {
+		args.Limit = DefaultLimit
+	}
+
+	if args.SnippetTokens < 0 {
+		args.SnippetTokens = 10
+	}
+
+	if args.SnippetTokens > 64 {
+		args.SnippetTokens = 64
+	}
+
+	if args.SnippetStart == "" {
+		args.SnippetStart = `<span class="text-red-500">`
+	}
+
+	if args.SnippetEnd == "" {
+		args.SnippetEnd = `</span>`
+	}
+
+	query := `
+	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
+	FROM fts
+	JOIN edges e ON e.id = fts.id
+	WHERE fts.type = 'edge' AND fts MATCH ?
+	ORDER BY bm25(fts)
+	LIMIT ?;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	edges := []models.Edge{}
+
+	for rows.Next() {
+		e := models.Edge{}
+
+		var createdAt int64
+		var updatedAt int64
+
+		var props []byte
+		if err := rows.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &props, &e.Snippet); err != nil {
+			return edges, err
+		}
+
+		if err := e.Properties.FromBytes(props); err != nil {
+			return edges, err
+		}
+
+		e.CreatedAt = time.Unix(createdAt, 0)
+		e.UpdatedAt = time.Unix(updatedAt, 0)
+
+		edges = append(edges, e)
+	}
+
+	return edges, nil
+}
+
+// Edges applies the search for all edges in the store.
+func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge, error) {
+	if args.Limit == 0 {
+		args.Limit = DefaultLimit
+	}
+
+	query := `
+	SELECT e.id, e.created_at, e.updated_at,, e.from_id, e.label, e.to_id, e.properties
+	FROM edges e
+	LIMIT ?;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, args.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	edges := []models.Edge{}
+
+	for rows.Next() {
+		e := models.Edge{}
+
+		var createdAt int64
+		var updatedAt int64
+
+		var props []byte
+		if err := rows.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &props); err != nil {
+			return edges, err
+		}
+
+		if err := e.Properties.FromBytes(props); err != nil {
+			return edges, err
+		}
+
+		e.CreatedAt = time.Unix(createdAt, 0)
+		e.UpdatedAt = time.Unix(updatedAt, 0)
+
+		edges = append(edges, e)
+	}
+
+	return edges, nil
 }

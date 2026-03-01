@@ -93,7 +93,7 @@ func (s *Server) GETNodes(w http.ResponseWriter, r *http.Request) {
 	if term == "" {
 		nodes, err = s.store.Nodes(ctx, store.NodesArgs{Limit: limit})
 	} else {
-		args := store.NodesTermSearchArgs{Term: term, Limit: limit, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
+		args := store.TermSearchArgs{Term: term, Limit: limit, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
 		nodes, err = s.store.NodesTermSearch(ctx, args)
 	}
 
