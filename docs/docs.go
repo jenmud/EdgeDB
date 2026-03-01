@@ -228,6 +228,46 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/upload": {
+            "put": {
+                "description": "Uploads one or more nodes and edges sets.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Uploads one or more nodes and edges sets.",
+                "parameters": [
+                    {
+                        "description": "One or more nodes to add/update",
+                        "name": "nodes",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.UploadReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of uploaded nodes and edges",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.UploadedResp"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -306,6 +346,40 @@ const docTemplate = `{
         "server.PUTNodesReq": {
             "type": "object",
             "properties": {
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Node"
+                    }
+                }
+            }
+        },
+        "server.UploadReq": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Edge"
+                    }
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Node"
+                    }
+                }
+            }
+        },
+        "server.UploadedResp": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Edge"
+                    }
+                },
                 "nodes": {
                     "type": "array",
                     "items": {

@@ -29,6 +29,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /api/v1/nodes", s.GETNodes)
 	mux.HandleFunc("PUT /api/v1/edges", s.PUTEdges)
 	mux.HandleFunc("GET /api/v1/edges", s.GETEdges)
+	mux.HandleFunc("PUT /api/v1/upload", s.Upload)
 
 	// Wrap the mux with CORS middleware
 	return s.corsMiddleware(mux)
@@ -250,6 +251,64 @@ func (s *Server) PUTEdges(w http.ResponseWriter, r *http.Request) {
 
 	encoder := json.NewEncoder(w)
 	if err := encoder.Encode(edges); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+type UploadReq struct {
+	PUTNodesReq
+	PUTEdgesReq
+}
+
+type UploadedResp struct {
+	Nodes []models.Node
+	Edges []models.Edge
+}
+
+// Upload uploads one or more nodes and edges sets.
+// @Summary Uploads one or more nodes and edges sets.
+// @Description Uploads one or more nodes and edges sets.
+// @Tags upload
+// @Produce json
+// @Param nodes body UploadReq true "One or more nodes to add/update"
+// @Success 200 {array} UploadedResp "List of uploaded nodes and edges"
+// @Failure 400 "Bad request"
+// @Failure 500 "Internal server error"
+// @Router /api/v1/upload [put]
+func (s *Server) Upload(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req := UploadReq{}
+	defer r.Body.Close()
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	nodes, err := s.store.UpsertNodes(ctx, req.Nodes...)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	edges, err := s.store.UpsertEdges(ctx, req.Edges...)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	resp := UploadedResp{
+		Nodes: nodes,
+		Edges: edges,
+	}
+
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

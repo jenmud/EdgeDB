@@ -55,6 +55,28 @@ definitions:
           $ref: '#/definitions/models.Node'
         type: array
     type: object
+  server.UploadReq:
+    properties:
+      edges:
+        items:
+          $ref: '#/definitions/models.Edge'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/models.Node'
+        type: array
+    type: object
+  server.UploadedResp:
+    properties:
+      edges:
+        items:
+          $ref: '#/definitions/models.Edge'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/models.Node'
+        type: array
+    type: object
 info:
   contact: {}
   description: EdgeDB API server
@@ -207,4 +229,30 @@ paths:
       summary: Add/update one or more nodes.
       tags:
       - nodes
+  /api/v1/upload:
+    put:
+      description: Uploads one or more nodes and edges sets.
+      parameters:
+      - description: One or more nodes to add/update
+        in: body
+        name: nodes
+        required: true
+        schema:
+          $ref: '#/definitions/server.UploadReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of uploaded nodes and edges
+          schema:
+            items:
+              $ref: '#/definitions/server.UploadedResp'
+            type: array
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+      summary: Uploads one or more nodes and edges sets.
+      tags:
+      - upload
 swagger: "2.0"

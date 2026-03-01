@@ -3,80 +3,137 @@ import json
 import time
 
 KJV_URL = "https://raw.githubusercontent.com/thiagobodruk/bible/master/json/en_kjv.json"
-API_URL = "http://localhost:8080/api/v1/nodes"
+API_URL = "http://localhost:8080/api/v1/upload"
 
 BATCH_SIZE = 500
 
 
 def download_bible():
     print("Downloading KJV Bible...")
-    response = requests.get(KJV_URL)
+    response = requests.get(KJV_URL, timeout=30)
     response.raise_for_status()
-
-    # Remove UTF-8 BOM safely
-    text = response.content.decode("utf-8-sig")
-    return json.loads(text)
+    return json.loads(response.content.decode("utf-8-sig"))
 
 
-def generate_nodes(bible_json):
+def generate_graph(bible_json):
     node_id = 0
+
     for book_order, book in enumerate(bible_json, start=1):
-        book_name = book["name"]
+        book_id = node_id
         testament = "Old" if book_order <= 39 else "New"
 
         # Book node
         yield {
-            "id": node_id,
-            "label": "letter",
-            "properties": {
-                "name": book_name,
-                "testament": testament,
-                "order": book_order,
-                "chapter_count": len(book["chapters"]),
-                "type": "book",
+            "type": "node",
+            "data": {
+                "id": book_id,
+                "label": "letter",
+                "properties": {
+                    "name": book["name"],
+                    "testament": testament,
+                    "order": book_order,
+                    "chapter_count": len(book["chapters"]),
+                    "type": "book",
+                },
             },
         }
         node_id += 1
 
         for chapter_index, chapter in enumerate(book["chapters"], start=1):
+            chapter_id = node_id
+
             # Chapter node
             yield {
-                "id": node_id,
-                "label": "chapter",
-                "properties": {
-                    "book": book_name,
-                    "chapter": chapter_index,
-                    "testament": testament,
-                    "bookOrder": book_order,
-                    "verse_count": len(chapter),
-                    "reference": f"{book_name} {chapter_index}",
-                    "type": "chapter",
+                "type": "node",
+                "data": {
+                    "id": chapter_id,
+                    "label": "chapter",
+                    "properties": {
+                        "book": book["name"],
+                        "chapter": chapter_index,
+                        "testament": testament,
+                        "bookOrder": book_order,
+                        "verse_count": len(chapter),
+                        "reference": f"{book['name']} {chapter_index}",
+                        "type": "chapter",
+                    },
                 },
             }
             node_id += 1
 
-            for verse_index, verse_text in enumerate(chapter, start=1):
-                yield {
-                    "id": node_id,
-                    "label": "verse",
+            # Edge: Book → Chapter
+            yield {
+                "type": "edge",
+                "data": {
+                    "from_id": book_id,
+                    "label": "contains",
+                    "to_id": chapter_id,
+                    "weight": 1,
                     "properties": {
-                        "book": book_name,
-                        "chapter": chapter_index,
-                        "verse": verse_index,
-                        "testament": testament,
-                        "bookOrder": book_order,
-                        "reference": f"{book_name} {chapter_index}:{verse_index}",
-                        "content": verse_text,
-                        "word_count": len(verse_text.split()),
-                        "char_count": len(verse_text),
-                        "type": "verse",
+                        "relation": "book_to_chapter"
+                    },
+                },
+            }
+
+            for verse_index, verse_text in enumerate(chapter, start=1):
+                verse_id = node_id
+
+                # Verse node
+                yield {
+                    "type": "node",
+                    "data": {
+                        "id": verse_id,
+                        "label": "verse",
+                        "properties": {
+                            "book": book["name"],
+                            "chapter": chapter_index,
+                            "verse": verse_index,
+                            "testament": testament,
+                            "bookOrder": book_order,
+                            "reference": f"{book['name']} {chapter_index}:{verse_index}",
+                            "content": verse_text,
+                            "word_count": len(verse_text.split()),
+                            "char_count": len(verse_text),
+                            "type": "verse",
+                        },
                     },
                 }
                 node_id += 1
 
+                # Edge: Chapter → Verse
+                yield {
+                    "type": "edge",
+                    "data": {
+                        "from_id": chapter_id,
+                        "label": "contains",
+                        "to_id": verse_id,
+                        "weight": 1,
+                        "properties": {
+                            "relation": "chapter_to_verse"
+                        },
+                    },
+                }
 
-def upload_batch(batch):
-    payload = {"nodes": batch}
+                # Optional: Book → Verse (fast traversal)
+                yield {
+                    "type": "edge",
+                    "data": {
+                        "from_id": book_id,
+                        "label": "contains",
+                        "to_id": verse_id,
+                        "weight": 1,
+                        "properties": {
+                            "relation": "book_to_verse"
+                        },
+                    },
+                }
+
+
+def upload_batch(nodes, edges):
+    payload = {
+        "nodes": nodes,
+        "edges": edges,
+    }
 
     response = requests.put(
         API_URL,
@@ -90,29 +147,34 @@ def upload_batch(batch):
         print(response.text)
         raise Exception("Upload failed")
 
-    print(f"Uploaded batch of {len(batch)} nodes")
+    print(f"Uploaded {len(nodes)} nodes and {len(edges)} edges")
 
 
-def upload_in_batches(node_generator):
-    batch = []
+def upload_in_batches(generator):
+    nodes_batch = []
+    edges_batch = []
 
-    for node in node_generator:
-        batch.append(node)
+    for item in generator:
+        if item["type"] == "node":
+            nodes_batch.append(item["data"])
+        else:
+            edges_batch.append(item["data"])
 
-        if len(batch) >= BATCH_SIZE:
-            upload_batch(batch)
-            batch.clear()
-            time.sleep(0.2)  # small pause to avoid overwhelming server
+        if len(nodes_batch) >= BATCH_SIZE:
+            upload_batch(nodes_batch, edges_batch)
+            nodes_batch.clear()
+            edges_batch.clear()
+            time.sleep(0.2)
 
-    if batch:
-        upload_batch(batch)
+    if nodes_batch:
+        upload_batch(nodes_batch, edges_batch)
 
 
 def main():
     bible_json = download_bible()
-    node_generator = generate_nodes(bible_json)
-    upload_in_batches(node_generator)
-    print("Done uploading full Bible.")
+    graph_generator = generate_graph(bible_json)
+    upload_in_batches(graph_generator)
+    print("Done uploading full Bible graph.")
 
 
 if __name__ == "__main__":
