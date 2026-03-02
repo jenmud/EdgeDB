@@ -92,7 +92,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/server.PUTEdgesReq"
+                            "$ref": "#/definitions/api.PUTEdgesReq"
                         }
                     }
                 ],
@@ -199,7 +199,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/server.PUTNodesReq"
+                            "$ref": "#/definitions/api.PUTNodesReq"
                         }
                     }
                 ],
@@ -222,6 +222,13 @@
                 }
             }
         },
+        "/api/v1/static": {
+            "get": {
+                "description": "Static serves up static files",
+                "summary": "Static serves up static files",
+                "responses": {}
+            }
+        },
         "/api/v1/upload": {
             "put": {
                 "description": "Uploads one or more nodes and edges sets.",
@@ -239,7 +246,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/server.UploadReq"
+                            "$ref": "#/definitions/api.UploadReq"
                         }
                     }
                 ],
@@ -249,7 +256,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/server.UploadedResp"
+                                "$ref": "#/definitions/api.UploadedResp"
                             }
                         }
                     },
@@ -264,6 +271,62 @@
         }
     },
     "definitions": {
+        "api.PUTEdgesReq": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Edge"
+                    }
+                }
+            }
+        },
+        "api.PUTNodesReq": {
+            "type": "object",
+            "properties": {
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Node"
+                    }
+                }
+            }
+        },
+        "api.UploadReq": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Edge"
+                    }
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Node"
+                    }
+                }
+            }
+        },
+        "api.UploadedResp": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Edge"
+                    }
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Node"
+                    }
+                }
+            }
+        },
         "models.Edge": {
             "type": "object",
             "properties": {
@@ -324,62 +387,6 @@
         "models.Properties": {
             "type": "object",
             "additionalProperties": {}
-        },
-        "server.PUTEdgesReq": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Edge"
-                    }
-                }
-            }
-        },
-        "server.PUTNodesReq": {
-            "type": "object",
-            "properties": {
-                "nodes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Node"
-                    }
-                }
-            }
-        },
-        "server.UploadReq": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Edge"
-                    }
-                },
-                "nodes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Node"
-                    }
-                }
-            }
-        },
-        "server.UploadedResp": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Edge"
-                    }
-                },
-                "nodes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Node"
-                    }
-                }
-            }
         }
     }
 }

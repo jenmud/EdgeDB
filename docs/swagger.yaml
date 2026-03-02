@@ -1,5 +1,41 @@
 basePath: /
 definitions:
+  api.PUTEdgesReq:
+    properties:
+      edges:
+        items:
+          $ref: '#/definitions/models.Edge'
+        type: array
+    type: object
+  api.PUTNodesReq:
+    properties:
+      nodes:
+        items:
+          $ref: '#/definitions/models.Node'
+        type: array
+    type: object
+  api.UploadReq:
+    properties:
+      edges:
+        items:
+          $ref: '#/definitions/models.Edge'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/models.Node'
+        type: array
+    type: object
+  api.UploadedResp:
+    properties:
+      edges:
+        items:
+          $ref: '#/definitions/models.Edge'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/models.Node'
+        type: array
+    type: object
   models.Edge:
     properties:
       created_at:
@@ -40,42 +76,6 @@ definitions:
     type: object
   models.Properties:
     additionalProperties: {}
-    type: object
-  server.PUTEdgesReq:
-    properties:
-      edges:
-        items:
-          $ref: '#/definitions/models.Edge'
-        type: array
-    type: object
-  server.PUTNodesReq:
-    properties:
-      nodes:
-        items:
-          $ref: '#/definitions/models.Node'
-        type: array
-    type: object
-  server.UploadReq:
-    properties:
-      edges:
-        items:
-          $ref: '#/definitions/models.Edge'
-        type: array
-      nodes:
-        items:
-          $ref: '#/definitions/models.Node'
-        type: array
-    type: object
-  server.UploadedResp:
-    properties:
-      edges:
-        items:
-          $ref: '#/definitions/models.Edge'
-        type: array
-      nodes:
-        items:
-          $ref: '#/definitions/models.Node'
-        type: array
     type: object
 info:
   contact: {}
@@ -139,7 +139,7 @@ paths:
         name: nodes
         required: true
         schema:
-          $ref: '#/definitions/server.PUTEdgesReq'
+          $ref: '#/definitions/api.PUTEdgesReq'
       produces:
       - application/json
       responses:
@@ -212,7 +212,7 @@ paths:
         name: nodes
         required: true
         schema:
-          $ref: '#/definitions/server.PUTNodesReq'
+          $ref: '#/definitions/api.PUTNodesReq'
       produces:
       - application/json
       responses:
@@ -229,6 +229,11 @@ paths:
       summary: Add/update one or more nodes.
       tags:
       - nodes
+  /api/v1/static:
+    get:
+      description: Static serves up static files
+      responses: {}
+      summary: Static serves up static files
   /api/v1/upload:
     put:
       description: Uploads one or more nodes and edges sets.
@@ -238,7 +243,7 @@ paths:
         name: nodes
         required: true
         schema:
-          $ref: '#/definitions/server.UploadReq'
+          $ref: '#/definitions/api.UploadReq'
       produces:
       - application/json
       responses:
@@ -246,7 +251,7 @@ paths:
           description: List of uploaded nodes and edges
           schema:
             items:
-              $ref: '#/definitions/server.UploadedResp'
+              $ref: '#/definitions/api.UploadedResp'
             type: array
         "400":
           description: Bad request

@@ -44,7 +44,7 @@ test:
 
 
 generate:
-	$(GO) tool swag init --parseInternal --dir ./cmd/api,./internal,./models --output ./docs
+	$(GO) tool swag init --dir ./cmd,./cmd/v1/api,./cmd/v1/web,./models --output ./docs
 
 
 fix:
@@ -53,4 +53,8 @@ fix:
 
 
 run: generate fix
-	$(GO) run ./cmd/api
+	$(GO) run ./cmd
+
+
+build: generate fix
+	$(GO) build -o ./dist/edgedb-server ./cmd

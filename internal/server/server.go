@@ -20,7 +20,7 @@ type Server struct {
 
 // NewServer creates and configures a new HTTP server.
 // If the address is not provided, it will default to envvar "EDGEDB_WEB_ADDRESS", or ":8080" if the envvar is not set.
-func NewServer(address string, s store.Store) *http.Server {
+func NewServer(mux http.Handler, address string, s store.Store) *http.Server {
 	if address == "" {
 		address = os.Getenv("EDGEDB_WEB_ADDRESS")
 		if address == "" {
@@ -36,7 +36,7 @@ func NewServer(address string, s store.Store) *http.Server {
 	// Declare Server config
 	server := &http.Server{
 		Addr:    NewServer.address,
-		Handler: NewServer.RegisterRoutes(),
+		Handler: mux,
 		BaseContext: func(l net.Listener) context.Context {
 			logger := slog.With(slog.Group("server", slog.String("address", l.Addr().String())))
 			slog.SetDefault(logger)
