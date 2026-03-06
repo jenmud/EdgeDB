@@ -43,8 +43,15 @@ test:
 	CGO_ENABLED=1 $(GO) test -race -failfast -v ./...
 
 
-generate:
+generate-swagger:
 	$(GO) tool swag init --dir ./cmd,./cmd/v1/api,./cmd/v1/web,./models --output ./docs
+
+
+generate-templ:
+	$(GO) tool templ generate
+
+
+generate: generate-templ generate-swagger
 
 
 fix:
@@ -54,6 +61,10 @@ fix:
 
 run: generate fix
 	$(GO) run ./cmd
+
+
+run-reload: generate fix
+	$(GO) tool templ generate --watch --proxy="http://localhost:8080" --cmd="go run ./cmd"
 
 
 build: generate fix
