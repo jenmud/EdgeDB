@@ -1,6 +1,7 @@
 package web
 
 import (
+	"io/fs"
 	"log/slog"
 	"net/http"
 
@@ -14,8 +15,14 @@ import (
 // @Router /static [get]
 func StaticAssets(mux *http.ServeMux) {
 	slog.Info("registered route", slog.String("route", "GET /static"))
-	fileServer := http.FileServer(http.FS(Static))
-	mux.Handle("/static/", fileServer)
+
+	sub, err := fs.Sub(Static, "static")
+	if err != nil {
+		panic(err)
+	}
+
+	fileServer := http.FileServer(http.FS(sub))
+	mux.Handle("/v1/static/", http.StripPrefix("/v1/static/", fileServer))
 }
 
 func Index(mux *http.ServeMux, s store.Store) {
