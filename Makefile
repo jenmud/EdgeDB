@@ -6,15 +6,18 @@ GO = GOEXPERIMENT=jsonv2,greenteagc go
 
 install-tailwind-cli:
 	mkdir -p $(HOME)/.local/bin && \
-	curl -L -o $(HOME)/.local/bin/tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.18/tailwindcss-linux-x64 && \
+	curl -L -o $(HOME)/.local/bin/tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v4.2.1/tailwindcss-linux-x64 && \
 	chmod +x $(HOME)/.local/bin/tailwindcss
 
 
-install:install-gotests install-tools install-tailwind-cli
+install-ui-tools: install-tailwind-cli
 
 
-install-tools:
+install-go-tools:
 	$(GO) install tool
+
+
+install:install-gotests install-go-tools install-ui-tools
 
 
 # If you want to use vscode to generate tests, you will need to have gotests installed on the machine
@@ -47,11 +50,11 @@ generate-swagger:
 	$(GO) tool swag init --dir ./cmd,./cmd/v1/api,./cmd/v1/web,./models --output ./docs
 
 
-generate-templ:
+generate-ui:
 	$(GO) tool templ generate
 
 
-generate: generate-templ generate-swagger
+generate: generate-ui generate-swagger
 
 
 fix:

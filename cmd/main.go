@@ -108,12 +108,18 @@ func corsMiddleware(next http.Handler) http.Handler {
 // setupRoutes sets up all the necessary routes used by the server.
 func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
+
+	// ui routes
 	web.StaticAssets(mux)
+	web.Index(mux, s)
+
+	// api routes
 	api.GETNodes(mux, s)
 	api.PUTNodes(mux, s)
 	api.GETEdges(mux, s)
 	api.PUTEdges(mux, s)
 	api.Upload(mux, s)
+
 	return corsMiddleware(mux)
 }
 

@@ -229,11 +229,6 @@ paths:
       summary: Add/update one or more nodes.
       tags:
       - nodes
-  /api/v1/static:
-    get:
-      description: Static serves up static files
-      responses: {}
-      summary: Static serves up static files
   /api/v1/upload:
     put:
       description: Uploads one or more nodes and edges sets.
@@ -260,4 +255,9 @@ paths:
       summary: Uploads one or more nodes and edges sets.
       tags:
       - upload
+  /static:
+    get:
+      description: Static serves up static files
+      responses: {}
+      summary: Static serves up static files
 swagger: "2.0"

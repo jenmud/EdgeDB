@@ -229,13 +229,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/static": {
-            "get": {
-                "description": "Static serves up static files",
-                "summary": "Static serves up static files",
-                "responses": {}
-            }
-        },
         "/api/v1/upload": {
             "put": {
                 "description": "Uploads one or more nodes and edges sets.",
@@ -274,6 +267,13 @@ const docTemplate = `{
                         "description": "Internal server error"
                     }
                 }
+            }
+        },
+        "/static": {
+            "get": {
+                "description": "Static serves up static files",
+                "summary": "Static serves up static files",
+                "responses": {}
             }
         }
     },
