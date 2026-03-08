@@ -22,8 +22,10 @@ templ Base(title string) {
 
 		<body class="min-h-screen">
 			<main>
-				@partials.Navbar(title, "/v1/ui")	
-				{ children... }
+				@partials.Navbar()
+				<div class="m-6">
+					{ children... }
+				</div>	
 			</main>
 		</body>
 

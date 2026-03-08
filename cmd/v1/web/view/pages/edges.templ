@@ -4,32 +4,30 @@ import (
     "github.com/jenmud/edgedb/cmd/v1/web/view/components"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 	"github.com/jenmud/edgedb/models"
-	"encoding/json"
 )
 
-func propsAsString(props models.Properties) string {
-    s, err := json.Marshal(props)
-    if err != nil { return "" }
-    return string(s)
-}
 
-templ Nodes(nodes ...models.Node) {
+templ Edges(edges ...models.Edge) {
     @layout.Base("EdgeDB") {
         @components.Table(){
             <thead>
                 <tr>
                     <th></th>
+                    <th>From</th>
                     <th>Label</th>
+                    <th>To</th>
                     <th>Properties</th>
                 </tr>
             </thead>
 
             <tbody>
-                for _, node := range nodes {
+                for _, edge := range edges {
                     <tr class="hover:bg-base-300">
-                        <td>{ node.ID }</td>
-                        <td>{ node.Label }</td>
-                        <td>{ propsAsString(node.Properties) }</td>
+                        <td>{ edge.ID }</td>
+                        <td>{ edge.From }</td>
+                        <td>{ edge.Label }</td>
+                        <td>{ edge.To }</td>
+                        <td>{ propsAsString(edge.Properties) }</td>
                     </tr>
                 }
             </tbody>
