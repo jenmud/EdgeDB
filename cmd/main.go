@@ -113,6 +113,7 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	web.StaticAssets(mux)
 	web.Index(mux, s)
 	web.Nodes(mux, s)
+	web.NodesSearch(mux, s)
 	web.Edges(mux, s)
 
 	// api routes

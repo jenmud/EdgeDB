@@ -13,26 +13,41 @@ func propsAsString(props models.Properties) string {
     return string(s)
 }
 
-templ Nodes(nodes ...models.Node) {
-    @layout.Base("EdgeDB") {
-        @components.Table(){
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Label</th>
-                    <th>Properties</th>
-                </tr>
-            </thead>
 
-            <tbody>
-                for _, node := range nodes {
-                    <tr class="hover:bg-base-300">
-                        <td>{ node.ID }</td>
-                        <td>{ node.Label }</td>
-                        <td>{ propsAsString(node.Properties) }</td>
-                    </tr>
-                }
-            </tbody>
-        }
+templ NodesTable(nodes ...models.Node) {
+    @components.Table(){
+        <thead>
+            <tr>
+                <th></th>
+                <th>Label</th>
+                <th>Properties</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            for _, node := range nodes {
+                <tr class="hover:bg-base-300">
+                    <td>{ node.ID }</td>
+                    <td>{ node.Label }</td>
+                    <td>{ propsAsString(node.Properties) }</td>
+                </tr>
+            }
+        </tbody>
+    }
+}
+
+
+templ Nodes(nodes ...models.Node) {
+   <div>
+        @components.SearchTerm("/v1/ui/search/nodes")
+        <div class="divider"></div>
+        <div id="nodes">@NodesTable(nodes...)</div>
+   </div> 
+}
+
+
+templ NodesPage(nodes ...models.Node) {
+    @layout.Base("EdgeDB") {
+        @Nodes(nodes...)
     }
 }
