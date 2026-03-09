@@ -30,3 +30,27 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] Add in a detail page for a single node or edge.
 - [ ] ID's in the nodes and edges table to be hyperlinks to the detail page of the node or edge.
 - [ ] Add in the force directed graph in to the UI. Look at using https://github.com/vasturiano/force-graph
+
+
+```js
+// Possible example
+<script src="https://unpkg.com/force-graph"></script>
+
+<div id="graph"></div>
+
+<script>
+fetch("/graph.json")
+.then(res => res.json())
+.then(data => {
+
+  const Graph = ForceGraph()
+    (document.getElementById('graph'))
+      .graphData(data)
+      .nodeLabel('name')
+      .nodeAutoColorBy('label')
+      .linkDirectionalArrowLength(6)
+      .linkDirectionalArrowRelPos(1)
+
+})
+</script>
+```
