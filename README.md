@@ -30,6 +30,7 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] Add in a detail page for a single node or edge.
 - [ ] ID's in the nodes and edges table to be hyperlinks to the detail page of the node or edge.
 - [ ] Add in the force directed graph in to the UI. Look at using https://github.com/vasturiano/force-graph
+- [ ] Make the store distrabuted using raft.
 
 
 ```js
