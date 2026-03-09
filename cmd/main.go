@@ -114,7 +114,9 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	web.Index(mux, s)
 	web.Nodes(mux, s)
 	web.NodesSearch(mux, s)
+
 	web.Edges(mux, s)
+	web.EdgesSearch(mux, s)
 
 	// api routes
 	api.GETNodes(mux, s)

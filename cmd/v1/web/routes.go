@@ -8,6 +8,7 @@ import (
 	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/models"
 	"github.com/starfederation/datastar-go/datastar"
 )
 
@@ -63,14 +64,22 @@ func NodesSearch(mux *http.ServeMux, s store.Store) {
 			Term  string `json:"term"`
 		}
 
-		queryStore := Store{Limit: 1000, Term: "type:nodes"}
+		queryStore := Store{}
 
 		if err := datastar.ReadSignals(r, &queryStore); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		nodes, err := s.NodesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
+		var err error
+		var nodes []models.Node
+
+		if queryStore.Term == "" {
+			nodes, err = s.Nodes(ctx, store.NodesArgs{Limit: queryStore.Limit})
+		} else {
+			nodes, err = s.NodesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
+		}
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -92,7 +101,43 @@ func Edges(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		component := pages.Edges(edges...)
+		component := pages.EdgesPage(edges...)
+		component.Render(ctx, w)
+	})
+}
+
+func EdgesSearch(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /v1/ui/search/edges"))
+	mux.HandleFunc("GET /v1/ui/search/edges", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		type Store struct {
+			Limit int    `json:"limit"`
+			Term  string `json:"term"`
+		}
+
+		queryStore := Store{}
+
+		if err := datastar.ReadSignals(r, &queryStore); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var err error
+		var edges []models.Edge
+
+		if queryStore.Term == "" {
+			edges, err = s.Edges(ctx, store.EdgesArgs{Limit: queryStore.Limit})
+		} else {
+			edges, err = s.EdgesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
+		}
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := pages.EdgesTable(edges...)
 		component.Render(ctx, w)
 	})
 }

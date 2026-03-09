@@ -7,8 +7,8 @@ import (
 )
 
 
-templ Edges(edges ...models.Edge) {
-    @layout.Base("EdgeDB") {
+templ EdgesTable(edges ...models.Edge) {
+    <div id="edges">
         @components.Table(){
             <thead>
                 <tr>
@@ -32,5 +32,20 @@ templ Edges(edges ...models.Edge) {
                 }
             </tbody>
         }
+    </div>
+}
+
+
+templ Edges(edges ...models.Edge) {
+   <div>
+        @components.SearchTerm("/v1/ui/search/edges")
+        <div class="divider"></div>
+        @EdgesTable(edges...)
+   </div> 
+}
+
+templ EdgesPage(edges ...models.Edge) {
+    @layout.Base("EdgeDB") {
+        @Edges(edges...)
     }
 }
