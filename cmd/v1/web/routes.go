@@ -8,7 +8,6 @@ import (
 	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
-	"github.com/jenmud/edgedb/models"
 	"github.com/starfederation/datastar-go/datastar"
 )
 
@@ -71,15 +70,7 @@ func NodesSearch(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		var err error
-		var nodes []models.Node
-
-		if queryStore.Term == "" {
-			nodes, err = s.Nodes(ctx, store.NodesArgs{Limit: queryStore.Limit})
-		} else {
-			nodes, err = s.NodesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
-		}
-
+		nodes, err := s.NodesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -123,21 +114,23 @@ func EdgesSearch(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		var err error
-		var edges []models.Edge
-
-		if queryStore.Term == "" {
-			edges, err = s.Edges(ctx, store.EdgesArgs{Limit: queryStore.Limit})
-		} else {
-			edges, err = s.EdgesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
-		}
-
+		edges, err := s.EdgesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		component := pages.EdgesTable(edges...)
+		component.Render(ctx, w)
+	})
+}
+
+func Graph(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph"))
+	mux.HandleFunc("GET /ui/v1/graph", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		component := pages.GraphPage()
 		component.Render(ctx, w)
 	})
 }

@@ -1,0 +1,12 @@
+package pages
+
+import (
+    "github.com/jenmud/edgedb/cmd/v1/web/view/layout"
+    "github.com/jenmud/edgedb/cmd/v1/web/view/components"
+)
+
+templ GraphPage() {
+    @layout.Base("EdgeDB") {
+        @components.Graph()
+    }
+}
