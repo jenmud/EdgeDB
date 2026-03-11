@@ -247,6 +247,10 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 		args.SnippetEnd = `</span>`
 	}
 
+	if args.Term == "" {
+		return s.Nodes(ctx, store.NodesArgs{Limit: args.Limit})
+	}
+
 	query := `
 	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
 	FROM fts
@@ -411,6 +415,10 @@ func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 
 	if args.SnippetEnd == "" {
 		args.SnippetEnd = `</span>`
+	}
+
+	if args.Term == "" {
+		return s.Edges(ctx, store.EdgesArgs{Limit: args.Limit})
 	}
 
 	query := `
