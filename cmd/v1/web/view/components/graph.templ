@@ -4,13 +4,13 @@ package components
 templ Graph() {
     <div>
         <div id="graph"
-            data-on-load="@get('/api/v1/graph/nodes')"
+            data-on-load="@get('/api/v1/graph')"
             data-on-load__then="renderGraph($data)">
         </div>
 
         <script>
             function renderGraph(data) {
-                ForceGraph()(document.getElementById({ targetID }))
+                ForceGraph()(document.getElementById('graph'))
                 .graphData(data)
                 .nodeLabel('name')
                 .nodeAutoColorBy('label')
