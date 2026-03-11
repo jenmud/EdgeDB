@@ -25,12 +25,12 @@ func StaticAssets(mux *http.ServeMux) {
 	}
 
 	fileServer := http.FileServer(http.FS(sub))
-	mux.Handle("/v1/ui/static/", http.StripPrefix("/v1/ui/static/", fileServer))
+	mux.Handle("/ui/v1/static/", http.StripPrefix("/ui/v1/static/", fileServer))
 }
 
 func Index(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /v1/ui/index"))
-	mux.HandleFunc("GET /v1/ui/index", func(w http.ResponseWriter, r *http.Request) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/index"))
+	mux.HandleFunc("GET /ui/v1/index", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		component := layout.Base("EdgeDB")
@@ -39,8 +39,8 @@ func Index(mux *http.ServeMux, s store.Store) {
 }
 
 func Nodes(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /v1/ui/nodes"))
-	mux.HandleFunc("GET /v1/ui/nodes", func(w http.ResponseWriter, r *http.Request) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/nodes"))
+	mux.HandleFunc("GET /ui/v1/nodes", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		nodes, err := s.Nodes(ctx, store.NodesArgs{Limit: 1000})
@@ -55,8 +55,8 @@ func Nodes(mux *http.ServeMux, s store.Store) {
 }
 
 func NodesSearch(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /v1/ui/search/nodes"))
-	mux.HandleFunc("GET /v1/ui/search/nodes", func(w http.ResponseWriter, r *http.Request) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/nodes"))
+	mux.HandleFunc("GET /ui/v1/search/nodes", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		type Store struct {
@@ -91,8 +91,8 @@ func NodesSearch(mux *http.ServeMux, s store.Store) {
 }
 
 func Edges(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /v1/ui/edges"))
-	mux.HandleFunc("GET /v1/ui/edges", func(w http.ResponseWriter, r *http.Request) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/edges"))
+	mux.HandleFunc("GET /ui/v1/edges", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		edges, err := s.Edges(ctx, store.EdgesArgs{Limit: 1000})
@@ -107,8 +107,8 @@ func Edges(mux *http.ServeMux, s store.Store) {
 }
 
 func EdgesSearch(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /v1/ui/search/edges"))
-	mux.HandleFunc("GET /v1/ui/search/edges", func(w http.ResponseWriter, r *http.Request) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/edges"))
+	mux.HandleFunc("GET /ui/v1/search/edges", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		type Store struct {

@@ -38,7 +38,7 @@ templ EdgesTable(edges ...models.Edge) {
 
 templ Edges(edges ...models.Edge) {
    <div>
-        @components.SearchTerm("/v1/ui/search/edges")
+        @components.SearchTerm("/ui/v1/search/edges")
         <div class="divider"></div>
         @EdgesTable(edges...)
    </div> 

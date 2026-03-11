@@ -41,7 +41,7 @@ templ NodesTable(nodes ...models.Node) {
 
 templ Nodes(nodes ...models.Node) {
    <div>
-        @components.SearchTerm("/v1/ui/search/nodes")
+        @components.SearchTerm("/ui/v1/search/nodes")
         <div class="divider"></div>
         @NodesTable(nodes...)
    </div> 
