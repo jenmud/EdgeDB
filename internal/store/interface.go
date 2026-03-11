@@ -84,5 +84,6 @@ type EdgeStore interface {
 type Store interface {
 	NodeStore
 	EdgeStore
+	Graph(context.Context, TermSearchArgs) (models.Graph, error)
 	Close() error
 }

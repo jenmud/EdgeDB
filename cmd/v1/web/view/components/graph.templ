@@ -1,0 +1,22 @@
+package components
+
+// Graph is a force directed graph.
+templ Graph() {
+    <div>
+        <div id="graph"
+            data-on-load="@get('/api/v1/graph/nodes')"
+            data-on-load__then="renderGraph($data)">
+        </div>
+
+        <script>
+            function renderGraph(data) {
+                ForceGraph()(document.getElementById({ targetID }))
+                .graphData(data)
+                .nodeLabel('name')
+                .nodeAutoColorBy('label')
+                .linkDirectionalArrowLength(6)
+                .linkDirectionalArrowRelPos(1);
+            }
+        </script>
+    </div>
+}

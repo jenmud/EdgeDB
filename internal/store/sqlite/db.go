@@ -495,3 +495,115 @@ func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge,
 
 	return edges, nil
 }
+
+// Graph applies the search term and returns the graph containing matched nodes and edges. Limit defaults to 1000 if limit is 0
+func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Graph, error) {
+	if args.Limit == 0 {
+		args.Limit = DefaultLimit
+	}
+
+	if args.SnippetTokens < 0 {
+		args.SnippetTokens = 10
+	}
+
+	if args.SnippetTokens > 64 {
+		args.SnippetTokens = 64
+	}
+
+	if args.SnippetStart == "" {
+		args.SnippetStart = `<span class="text-red-500">`
+	}
+
+	if args.SnippetEnd == "" {
+		args.SnippetEnd = `</span>`
+	}
+
+	graph := models.Graph{
+		Nodes: make([]models.Node, 0),
+		Links: make([]models.Edge, 0),
+	}
+
+	query := `
+	SELECT
+		n.id           AS node_id,
+		n.created_at   AS node_created_at,
+		n.updated_at   AS node_updated_at,
+		n.label        AS node_label,
+		n.properties   AS node_properties,
+
+		e.id           AS edge_id,
+		e.created_at   AS edge_created_at,
+		e.updated_at   AS edge_updated_at,
+		e.label        AS edge_label,
+		e.properties   AS edge_properties,
+		e.weight,
+		e.from_id,
+		e.to_id,
+
+		snippet(fts, -1, ?, ?, ' ... ', ?) AS snippet,
+		bm25(fts) AS score
+
+	FROM fts
+	LEFT JOIN nodes n ON fts.type = 'node' AND n.id = fts.id
+	LEFT JOIN edges e ON fts.type = 'edge' AND e.id = fts.id
+	WHERE fts MATCH ?
+	ORDER BY bm25(fts)
+	LIMIT ?;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.Limit)
+	if err != nil {
+		return graph, err
+	}
+
+	for rows.Next() {
+		n := models.Node{}
+		e := models.Edge{}
+
+		var snippet string
+		var score float64
+
+		var nCreatedAt int64
+		var nUpdatedAt int64
+		var nProps []byte
+
+		var eCreatedAt int64
+		var eUpdatedAt int64
+		var eProps []byte
+
+		err := rows.Scan(
+			&n.ID, &nCreatedAt, &nUpdatedAt, &n.Label, &nProps,
+			&e.ID, &eCreatedAt, &eUpdatedAt, &e.Label, &eProps, &e.Weight, &e.From, &e.To,
+			&snippet,
+			&score,
+		)
+
+		if err != nil {
+			return graph, err
+		}
+
+		if err := n.Properties.FromBytes(nProps); err != nil {
+			return graph, err
+		}
+
+		if err := e.Properties.FromBytes(eProps); err != nil {
+			return graph, err
+		}
+
+		n.CreatedAt = time.Unix(nCreatedAt, 0)
+		n.UpdatedAt = time.Unix(nUpdatedAt, 0)
+
+		e.CreatedAt = time.Unix(eCreatedAt, 0)
+		e.UpdatedAt = time.Unix(eUpdatedAt, 0)
+
+		if n.ID > 0 {
+			graph.Nodes = append(graph.Nodes, n)
+		}
+
+		if e.ID > 0 {
+			graph.Links = append(graph.Links, e)
+		}
+	}
+
+	return graph, nil
+}

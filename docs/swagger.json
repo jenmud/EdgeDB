@@ -115,9 +115,75 @@
                 }
             }
         },
+        "/api/v1/graph": {
+            "get": {
+                "description": "search return nodes and edges in a format that can be used in a force directed graph",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "graph"
+                ],
+                "summary": "search return nodes and edges used for a force directed graph",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "",
+                        "description": "search term",
+                        "name": "term",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\u003cspan class=\"text-red-500\"\u003e",
+                        "description": "snippet start",
+                        "name": "snippetStart",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\u003c/span\u003e",
+                        "description": "snippet start",
+                        "name": "snippetEnd",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 64,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "snippet tokens",
+                        "name": "tokens",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1000,
+                        "description": "limit results returned",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payload used for drawing graphs.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Graph"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
         "/api/v1/nodes": {
             "get": {
-                "description": "Search and return nodes.",
+                "description": "Search and return nodes",
                 "produces": [
                     "application/json"
                 ],
@@ -357,6 +423,23 @@
                 },
                 "weight": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.Graph": {
+            "type": "object",
+            "properties": {
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Edge"
+                    }
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Node"
+                    }
                 }
             }
         },

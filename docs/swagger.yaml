@@ -58,6 +58,17 @@ definitions:
       weight:
         type: integer
     type: object
+  models.Graph:
+    properties:
+      links:
+        items:
+          $ref: '#/definitions/models.Edge'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/models.Node'
+        type: array
+    type: object
   models.Node:
     properties:
       created_at:
@@ -156,9 +167,56 @@ paths:
       summary: Add/update one or more edges.
       tags:
       - edges
+  /api/v1/graph:
+    get:
+      description: search return nodes and edges in a format that can be used in a
+        force directed graph
+      parameters:
+      - default: ""
+        description: search term
+        in: query
+        name: term
+        type: string
+      - default: <span class="text-red-500">
+        description: snippet start
+        in: query
+        name: snippetStart
+        type: string
+      - default: </span>
+        description: snippet start
+        in: query
+        name: snippetEnd
+        type: string
+      - default: 10
+        description: snippet tokens
+        in: query
+        maximum: 64
+        minimum: 1
+        name: tokens
+        type: integer
+      - default: 1000
+        description: limit results returned
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Payload used for drawing graphs.
+          schema:
+            $ref: '#/definitions/models.Graph'
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+      summary: search return nodes and edges used for a force directed graph
+      tags:
+      - graph
   /api/v1/nodes:
     get:
-      description: Search and return nodes.
+      description: Search and return nodes
       parameters:
       - default: ""
         description: search term

@@ -13,7 +13,7 @@ import (
 
 // GetNodes searches and return nodes
 // @Summary Search and return nodes
-// @Description Search and return nodes.
+// @Description Search and return nodes
 // @Tags nodes
 // @Produce json
 // @Param term query string false "search term" default()
@@ -66,6 +66,56 @@ func GETNodes(mux *http.ServeMux, s store.Store) {
 
 		encoder := json.NewEncoder(w)
 		if err := encoder.Encode(nodes); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+// GetGraph search and return nodes and edges used for a force directed graph
+// @Summary search return nodes and edges used for a force directed graph
+// @Description search return nodes and edges in a format that can be used in a force directed graph
+// @Tags graph
+// @Produce json
+// @Param term query string false "search term" default()
+// @Param snippetStart query string false "snippet start" default(<span class="text-red-500">)
+// @Param snippetEnd query string false "snippet start" default(</span>)
+// @Param tokens query int false "snippet tokens" minimum(1) maximum(64) default(10)
+// @Param limit query int false "limit results returned" minimum(1) default(1000)
+// @Success 200 {object} models.Graph "Payload used for drawing graphs."
+// @Failure 400 "Bad request"
+// @Failure 500 "Internal server error"
+// @Router /api/v1/graph [get]
+func GETGraph(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /api/v1/graph"))
+	mux.HandleFunc("GET /api/v1/graph", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		term := strings.Trim(r.URL.Query().Get("term"), "\"")
+		snippetStart := r.URL.Query().Get("snippetStart")
+		snippetEnd := r.URL.Query().Get("snippetEnd")
+
+		limit := 1000
+		tokens := 10
+
+		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
+			limit = l
+		}
+
+		if s, err := strconv.Atoi(r.URL.Query().Get("tokens")); err == nil {
+			tokens = s
+		}
+
+		graph, err := s.Graph(ctx, store.TermSearchArgs{Limit: limit, Term: term, SnippetTokens: tokens, SnippetStart: snippetStart, SnippetEnd: snippetEnd})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(graph); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
