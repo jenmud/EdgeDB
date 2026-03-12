@@ -1,12 +1,8 @@
 package components
 
-import "fmt"
 
-
-templ Graph(apiQuery string) {
-    <div>
-        @SearchTerm("/ui/v1/graph")
-        <div class="divider"></div>
-        <div id="graph-container" data-init={ fmt.Sprintf(`MakeGraph("graph-container", "%s")`,  apiQuery) }></div>
+templ Graph() {
+    <div data-signals="{term: '', limit: 1000}">
+        <div id="graph-container" data-init="MakeGraph('graph-container', '/api/v1/graph')"></div>
    </div> 
 }

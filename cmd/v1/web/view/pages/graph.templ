@@ -5,8 +5,10 @@ import (
 	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 )
 
-templ GraphPage(apiQuery string) {
+templ GraphPage() {
     @layout.Base("EdgeDB") {
-        @components.Graph(apiQuery)
+        @components.SearchTerm("/ui/v1/search/graph")
+        <div class="divider"></div>
+        @components.Graph()
     }
 }

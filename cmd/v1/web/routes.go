@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
@@ -129,8 +130,29 @@ func Graph(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph"))
 	mux.HandleFunc("GET /ui/v1/graph", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		component := pages.GraphPage()
+		component.Render(ctx, w)
+	})
+}
 
-		component := pages.GraphPage("/api/v1/graph?limit=10")
+func GraphSearch(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/graph"))
+	mux.HandleFunc("GET /ui/v1/search/graph", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		type Store struct {
+			Limit int    `json:"limit"`
+			Term  string `json:"term"`
+		}
+
+		queryStore := Store{}
+
+		if err := datastar.ReadSignals(r, &queryStore); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := components.Graph()
 		component.Render(ctx, w)
 	})
 }
