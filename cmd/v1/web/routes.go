@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -152,7 +153,8 @@ func GraphSearch(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		component := components.Graph()
+		query := fmt.Sprintf("/api/v1/graph?term=%s&limit=%d", queryStore.Term, queryStore.Limit)
+		component := components.GraphContainer(query)
 		component.Render(ctx, w)
 	})
 }
