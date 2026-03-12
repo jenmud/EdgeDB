@@ -130,13 +130,7 @@ func Graph(mux *http.ServeMux, s store.Store) {
 	mux.HandleFunc("GET /ui/v1/graph", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		//graph, err := s.Graph(ctx, store.TermSearchArgs{})
-		//if err != nil {
-		//	http.Error(w, err.Error(), http.StatusInternalServerError)
-		//	return
-		//}
-
-		component := pages.GraphPage()
+		component := pages.GraphPage("/api/v1/graph?limit=10")
 		component.Render(ctx, w)
 	})
 }

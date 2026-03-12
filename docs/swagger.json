@@ -432,14 +432,71 @@
                 "links": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Edge"
+                        "$ref": "#/definitions/models.GraphEdge"
                     }
                 },
                 "nodes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Node"
+                        "$ref": "#/definitions/models.GraphNode"
                     }
+                }
+            }
+        },
+        "models.GraphEdge": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "properties": {
+                    "$ref": "#/definitions/models.Properties"
+                },
+                "snippet": {
+                    "description": "this is a special field show a small snippet of the match terms",
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.GraphNode": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "properties": {
+                    "$ref": "#/definitions/models.Properties"
+                },
+                "snippet": {
+                    "description": "this is a special field show a small snippet of the match terms",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },

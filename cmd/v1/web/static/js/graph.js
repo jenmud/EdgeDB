@@ -1,9 +1,5 @@
-//document.addEventListener("DOMContentLoaded", async function() {
-//});
-
-
-async function MakeGraph(target, query) {
-    const res = await fetch(query);
+async function MakeGraph(target, apiQuery) {
+    const res = await fetch(apiQuery);
     
     if (!res.ok) {
         console.error("fetch failed", res.status, await res.text());

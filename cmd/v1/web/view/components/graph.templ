@@ -1,0 +1,9 @@
+package components
+
+import "fmt"
+
+
+templ Graph(apiQuery string) {
+    <div id="graph-container" data-init={ fmt.Sprintf(`MakeGraph("graph-container", "%s")`,  apiQuery) }>
+    </div>
+}

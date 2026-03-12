@@ -62,12 +62,50 @@ definitions:
     properties:
       links:
         items:
-          $ref: '#/definitions/models.Edge'
+          $ref: '#/definitions/models.GraphEdge'
         type: array
       nodes:
         items:
-          $ref: '#/definitions/models.Node'
+          $ref: '#/definitions/models.GraphNode'
         type: array
+    type: object
+  models.GraphEdge:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      label:
+        type: string
+      properties:
+        $ref: '#/definitions/models.Properties'
+      snippet:
+        description: this is a special field show a small snippet of the match terms
+        type: string
+      source:
+        type: string
+      target:
+        type: string
+      updated_at:
+        type: string
+      weight:
+        type: integer
+    type: object
+  models.GraphNode:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      label:
+        type: string
+      properties:
+        $ref: '#/definitions/models.Properties'
+      snippet:
+        description: this is a special field show a small snippet of the match terms
+        type: string
+      updated_at:
+        type: string
     type: object
   models.Node:
     properties:

@@ -1,31 +1,12 @@
 package pages
 
 import (
-    // "github.com/jenmud/edgedb/cmd/v1/web/view/layout"
-    // "github.com/jenmud/edgedb/cmd/v1/web/view/components"
-	// "github.com/jenmud/edgedb/models"
+    "github.com/jenmud/edgedb/cmd/v1/web/view/layout"
+	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 )
 
-//templ GraphPage(data models.Graph) {
-//    @layout.Base("EdgeDB") {
-//        @components.Graph(data)
-//    }
-//}
-
-
-templ GraphPage() {
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <script src="https://unpkg.com/force-graph"></script>
-        <script src="/ui/v1/static/js/graph.js"></script>
-        <style>
-            body { margin: 0; }
-            #graph { width: 100vw; height: 100vh; }
-        </style>
-    </head>
-    <body onload={ templ.JSFuncCall("MakeGraph", "graph", "/api/v1/graph") }>
-        <div id="graph"></div>
-    </body>
-    </html>
+templ GraphPage(apiQuery string) {
+    @layout.Base("EdgeDB") {
+        @components.Graph(apiQuery)
+    }
 }
