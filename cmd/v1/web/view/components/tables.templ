@@ -1,0 +1,49 @@
+package components
+
+import (
+    "log/slog"
+    "encoding/json"
+	"github.com/jenmud/edgedb/models"
+)
+
+
+func asJSON(v any) string {
+    s, err := json.Marshal(v)
+    if err != nil {
+        slog.Error("error marshaling to JSON", slog.String("reason", err.Error()))
+        return ""
+    }
+    return string(s)
+}
+
+
+templ Table() {
+    <table class="table table-zebra">
+        { children... }
+    </table>
+}
+
+
+templ NodesTable(nodes ...models.Node) {
+    <div id="nodes">
+        @Table(){
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Label</th>
+                    <th>Properties</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                for _, node := range nodes {
+                    <tr class="hover:bg-base-300">
+                        <td>{ node.ID }</td>
+                        <td>{ node.Label }</td>
+                        <td>{ asJSON(node.Properties) }</td>
+                    </tr>
+                }
+            </tbody>
+        }
+    </div>
+}

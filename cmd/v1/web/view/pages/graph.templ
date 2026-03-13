@@ -9,6 +9,10 @@ templ GraphPage() {
     @layout.Base("EdgeDB") {
         @components.SearchTerm("/ui/v1/search/graph")
         <div class="divider"></div>
-        @components.Graph()
+        <div class="flex gap-2">
+            @components.NodesTable()
+            <div class="divider lg:divider-horizontal"></div>
+            @components.Graph()
+        </div>
     }
 }
