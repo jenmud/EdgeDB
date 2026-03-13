@@ -863,7 +863,8 @@ func (e ExpressionAttributeKey) String() string {
 
 // <hr noshade/>
 type BoolConstantAttribute struct {
-	Key AttributeKey
+	Key   AttributeKey
+	Range Range
 }
 
 func (bca *BoolConstantAttribute) String() string {
@@ -880,7 +881,8 @@ func (bca *BoolConstantAttribute) Visit(v Visitor) error {
 
 func (bca *BoolConstantAttribute) Copy() Attribute {
 	return &BoolConstantAttribute{
-		Key: bca.Key,
+		Key:   bca.Key,
+		Range: bca.Range,
 	}
 }
 
@@ -889,6 +891,7 @@ type ConstantAttribute struct {
 	Key         AttributeKey
 	Value       string
 	SingleQuote bool
+	Range       Range
 }
 
 func (ca *ConstantAttribute) String() string {
@@ -912,6 +915,7 @@ func (ca *ConstantAttribute) Copy() Attribute {
 		Value:       ca.Value,
 		SingleQuote: ca.SingleQuote,
 		Key:         ca.Key,
+		Range:       ca.Range,
 	}
 }
 
@@ -919,6 +923,7 @@ func (ca *ConstantAttribute) Copy() Attribute {
 type BoolExpressionAttribute struct {
 	Key        AttributeKey
 	Expression Expression
+	Range      Range
 }
 
 func (bea *BoolExpressionAttribute) String() string {
@@ -937,6 +942,7 @@ func (bea *BoolExpressionAttribute) Copy() Attribute {
 	return &BoolExpressionAttribute{
 		Expression: bea.Expression,
 		Key:        bea.Key,
+		Range:      bea.Range,
 	}
 }
 
@@ -1012,6 +1018,7 @@ func (ea *ExpressionAttribute) Copy() Attribute {
 // <a { spread... } />
 type SpreadAttributes struct {
 	Expression Expression
+	Range      Range
 }
 
 func (sa *SpreadAttributes) String() string {
@@ -1029,6 +1036,7 @@ func (sa *SpreadAttributes) Visit(v Visitor) error {
 func (sa *SpreadAttributes) Copy() Attribute {
 	return &SpreadAttributes{
 		Expression: sa.Expression,
+		Range:      sa.Range,
 	}
 }
 
@@ -1040,6 +1048,7 @@ type ConditionalAttribute struct {
 	Expression Expression
 	Then       []Attribute
 	Else       []Attribute
+	Range      Range
 }
 
 func (ca *ConditionalAttribute) String() string {
@@ -1107,6 +1116,7 @@ func (ca *ConditionalAttribute) Copy() Attribute {
 		Expression: ca.Expression,
 		Then:       CopyAttributes(ca.Then),
 		Else:       CopyAttributes(ca.Else),
+		Range:      ca.Range,
 	}
 }
 
@@ -1258,9 +1268,11 @@ func (tee *TemplElementExpression) Visit(v Visitor) error {
 	return v.VisitTemplElementExpression(tee)
 }
 
-// ChildrenExpression can be used to rended the children of a templ element.
+// ChildrenExpression can be used to render the children of a templ element.
 // { children ... }
-type ChildrenExpression struct{}
+type ChildrenExpression struct {
+	Range Range
+}
 
 func (*ChildrenExpression) IsNode() bool { return true }
 func (*ChildrenExpression) Write(w io.Writer, indent int) error {

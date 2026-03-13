@@ -2,6 +2,8 @@ package generatecmd
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -239,6 +241,19 @@ loop:
 				if err := os.Setenv("TEMPL_DEV_MODE", "true"); err != nil {
 					cmd.Log.Error("Error setting TEMPL_DEV_MODE environment variable", slog.Any("error", err))
 				}
+				// Check that the path is absolute.
+				// It should have already been made absolute at the start of the Run method, but just in case, we need to make sure it's absolute before setting it as an environment variable.
+				if !filepath.IsAbs(cmd.Args.Path) {
+					cmd.Log.Error("Path is not absolute, this may cause issues with the command execution", slog.String("path", cmd.Args.Path))
+				}
+				// Evaluate symlinks to match the behavior in runtime/watchmode.go.
+				watchRoot := cmd.Args.Path
+				if resolved, err := filepath.EvalSymlinks(watchRoot); err == nil {
+					watchRoot = resolved
+				}
+				if err := os.Setenv("TEMPL_DEV_MODE_WATCH_ROOT", watchRoot); err != nil {
+					cmd.Log.Error("Error setting TEMPL_DEV_MODE_WATCH_ROOT environment variable", slog.Any("error", err))
+				}
 			}
 			if _, err := run.Run(ctx, cmd.Args.Path, cmd.Args.Command); err != nil {
 				cmd.Log.Error("Error executing command", slog.Any("error", err))
@@ -349,16 +364,53 @@ func (cmd *Generate) deleteWatchModeTextFiles() error {
 	})
 }
 
+func (cmd *Generate) createTLSTransport() *http.Transport {
+	certPEM, err := os.ReadFile(cmd.Args.ProxyTLSCrt)
+	if err != nil {
+		cmd.Log.Error("Failed to read TLS certificate file", slog.Any("error", err))
+		return nil
+	}
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(certPEM) {
+		cmd.Log.Error("Failed to append certificate to pool")
+		return nil
+	}
+	return &http.Transport{
+		TLSClientConfig: &tls.Config{RootCAs: certPool},
+	}
+}
+
 func (cmd *Generate) startProxy() (p *proxy.Handler, err error) {
 	var target *url.URL
 	target, err = url.Parse(cmd.Args.Proxy)
 	if err != nil {
 		return nil, FatalError{Err: fmt.Errorf("failed to parse proxy URL: %w", err)}
 	}
-	p = proxy.New(cmd.Log, cmd.Args.ProxyBind, cmd.Args.ProxyPort, target)
+	scheme := "http"
+	if cmd.Args.ProxyTLSCrt != "" && cmd.Args.ProxyTLSKey != "" {
+		scheme = "https"
+	}
+	p = proxy.New(cmd.Log, scheme, cmd.Args.ProxyBind, cmd.Args.ProxyPort, target)
 	go func() {
 		cmd.Log.Info("Proxying", slog.String("from", p.URL), slog.String("to", p.Target.String()))
-		if err := http.ListenAndServe(fmt.Sprintf("%s:%d", cmd.Args.ProxyBind, cmd.Args.ProxyPort), p); err != nil {
+		server := &http.Server{
+			Addr:    fmt.Sprintf("%s:%d", cmd.Args.ProxyBind, cmd.Args.ProxyPort),
+			Handler: p,
+		}
+		// Configure TLS if certificates are provided.
+		if cmd.Args.ProxyTLSCrt != "" && cmd.Args.ProxyTLSKey != "" {
+			cert, err := tls.LoadX509KeyPair(cmd.Args.ProxyTLSCrt, cmd.Args.ProxyTLSKey)
+			if err != nil {
+				cmd.Log.Error("Failed to load TLS certificates", slog.Any("error", err))
+				return
+			}
+			server.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
+			if err = server.ListenAndServeTLS(cmd.Args.ProxyTLSCrt, cmd.Args.ProxyTLSKey); err != nil {
+				cmd.Log.Error("Proxy failed", slog.Any("error", err))
+			}
+			return
+		}
+		if err := server.ListenAndServe(); err != nil {
 			cmd.Log.Error("Proxy failed", slog.Any("error", err))
 		}
 	}()
@@ -372,6 +424,10 @@ func (cmd *Generate) startProxy() (p *proxy.Handler, err error) {
 		backoff.InitialInterval = time.Second
 		var client http.Client
 		client.Timeout = 1 * time.Second
+		// Configure TLS with CA pool for self-signed certificates on localhost.
+		if cmd.Args.ProxyTLSCrt != "" && cmd.Args.ProxyTLSKey != "" {
+			client.Transport = cmd.createTLSTransport()
+		}
 		for {
 			if resp, err := client.Get(p.URL); err == nil {
 				if resp.StatusCode != http.StatusBadGateway {

@@ -177,7 +177,7 @@ github.com/KyleBanks/depth
 # github.com/a-h/parse v0.0.0-20250122154542-74294addb73e
 ## explicit; go 1.18
 github.com/a-h/parse
-# github.com/a-h/templ v0.3.977
+# github.com/a-h/templ v0.3.1001
 ## explicit; go 1.23.0
 github.com/a-h/templ
 github.com/a-h/templ/cmd/templ

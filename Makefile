@@ -1,7 +1,7 @@
 GO = GOEXPERIMENT=jsonv2,greenteagc go
 
 
-.PHONY: tidy vendor
+.PHONY: tidy vendor install install-gotests tools update-tools test generate generate-ui generate-swagger fix run build
 
 
 install-tailwind-cli:
