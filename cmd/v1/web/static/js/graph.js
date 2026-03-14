@@ -1,17 +1,36 @@
-async function MakeGraph(target, apiQuery) {
-    const res = await fetch(apiQuery);
-    
-    if (!res.ok) {
-        console.error("fetch failed", res.status, await res.text());
-        return;
-    }
+function MakeGraph(target, data) {
 
-    const data = await res.json();
+    // lets add some particle speeds to the edges
+    // FIXME: this should be read from a property on the edge/link
+    data.links.forEach((i) => {
+        i.value = 1;
+    });
 
-    ForceGraph()(document.getElementById(target))
-        .graphData(data)
-        .nodeLabel('label')
-        .nodeAutoColorBy('label')
-        .linkDirectionalArrowLength(6)
-        .linkDirectionalArrowRelPos(1);
+    const Graph = new ForceGraph(document.getElementById(target))
+    .graphData(data)
+    .nodeId('id')
+    .nodeLabel('snippet')
+    .nodeAutoColorBy('label')
+    .linkAutoColorBy(d => d.source.label)
+    .linkCurvature('curvature')
+    .linkDirectionalParticles("value")
+    .linkDirectionalParticleSpeed(d => d.value * 0.001)
+    .nodeCanvasObject((node, ctx, globalScale) => {
+        const r = 4 + (node.val || 1); // approximate default scaling
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
+        ctx.fillStyle = node.color;
+        ctx.fill();
+
+        if (r * globalScale < 10) return;
+
+        const fontSize = 12 / globalScale;
+        ctx.font = `${fontSize}px Sans-Serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "white";
+
+        ctx.fillText(node.id, node.x, node.y);
+    });
 }

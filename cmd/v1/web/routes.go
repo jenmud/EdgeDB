@@ -1,13 +1,10 @@
 package web
 
 import (
-	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
 
-	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
-	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
 	"github.com/starfederation/datastar-go/datastar"
@@ -30,100 +27,9 @@ func StaticAssets(mux *http.ServeMux) {
 }
 
 func Index(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/index"))
-	mux.HandleFunc("GET /ui/v1/index", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		component := layout.Base("EdgeDB")
-		component.Render(ctx, w)
-	})
-}
-
-func Nodes(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/nodes"))
-	mux.HandleFunc("GET /ui/v1/nodes", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		nodes, err := s.Nodes(ctx, store.NodesArgs{Limit: 1000})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		component := pages.NodesPage(nodes...)
-		component.Render(ctx, w)
-	})
-}
-
-func NodesSearch(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/nodes"))
-	mux.HandleFunc("GET /ui/v1/search/nodes", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		type Store struct {
-			Limit int    `json:"limit"`
-			Term  string `json:"term"`
-		}
-
-		queryStore := Store{}
-
-		if err := datastar.ReadSignals(r, &queryStore); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		nodes, err := s.NodesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		component := pages.NodesTable(nodes...)
-		component.Render(ctx, w)
-	})
-}
-
-func Edges(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/edges"))
-	mux.HandleFunc("GET /ui/v1/edges", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		edges, err := s.Edges(ctx, store.EdgesArgs{Limit: 1000})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		component := pages.EdgesPage(edges...)
-		component.Render(ctx, w)
-	})
-}
-
-func EdgesSearch(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/edges"))
-	mux.HandleFunc("GET /ui/v1/search/edges", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		type Store struct {
-			Limit int    `json:"limit"`
-			Term  string `json:"term"`
-		}
-
-		queryStore := Store{}
-
-		if err := datastar.ReadSignals(r, &queryStore); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		edges, err := s.EdgesTermSearch(ctx, store.TermSearchArgs{Limit: queryStore.Limit, Term: queryStore.Term})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		component := pages.EdgesTable(edges...)
-		component.Render(ctx, w)
+	slog.Info("registered route", slog.String("route", "GET /ui/v1"))
+	mux.HandleFunc("GET /ui/v1", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/ui/v1/graph", http.StatusMovedPermanently)
 	})
 }
 
@@ -131,7 +37,14 @@ func Graph(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph"))
 	mux.HandleFunc("GET /ui/v1/graph", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		component := pages.GraphPage()
+
+		graph, err := s.Graph(ctx, store.TermSearchArgs{})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := pages.GraphPage(graph)
 		component.Render(ctx, w)
 	})
 }
@@ -153,8 +66,13 @@ func GraphSearch(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		query := fmt.Sprintf("/api/v1/graph?term=%s&limit=%d", queryStore.Term, queryStore.Limit)
-		component := components.GraphContainer(query)
+		graph, err := s.Graph(ctx, store.TermSearchArgs{Term: queryStore.Term, Limit: queryStore.Limit})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := pages.GraphContent(graph)
 		component.Render(ctx, w)
 	})
 }

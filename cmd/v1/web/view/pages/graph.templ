@@ -1,18 +1,23 @@
 package pages
 
 import (
+    "github.com/jenmud/edgedb/models"
     "github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 )
 
-templ GraphPage() {
+
+templ GraphPage(g models.Graph) {
     @layout.Base("EdgeDB") {
         @components.SearchTerm("/ui/v1/search/graph")
         <div class="divider"></div>
-        <div class="flex gap-2">
-            @components.NodesTable()
-            <div class="divider lg:divider-horizontal"></div>
-            @components.Graph()
-        </div>
+        @GraphContent(g)
     }
+}
+
+
+templ GraphContent(g models.Graph) {
+    <div id="graph-content">
+        @components.Graph(g)
+    </div>
 }
