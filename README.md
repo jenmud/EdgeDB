@@ -22,6 +22,7 @@ Once running, navigate to http://localhost:8080/v1/ui
 
 # Todo
 
+- [ ] Move todos into github.
 - [x] Add api and ui for nodes and edges.
 - [x] Add a simple table displaying nodes and edges.
 - [x] Tables should be filterable.
@@ -33,6 +34,7 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] Make the store distrabuted using raft.
 - [ ] Make the graph on the UI interactive. Example clicks etc..... This can be done when I have a better idea how I want to use it.
 - [ ] Change the upload to take a graph formatted upload file.
+- [ ] I don't like how I am now passing the data to the graph UI. Think of something better. (works for now)
 
 
 ```js
