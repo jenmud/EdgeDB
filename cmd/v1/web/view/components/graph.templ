@@ -51,7 +51,7 @@ templ GraphTable(g models.Graph) {
                         <td>@templ.Raw(node.Snippet)</td>
                     </tr>
                 }
-                for _, edge := range g.Links {
+                for _, edge := range g.Edges {
                     <tr class="hover:bg-base-300">
                         <td>{ edge.ID }</td>
                         <td>{ edge.From }</td>

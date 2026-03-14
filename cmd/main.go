@@ -121,7 +121,7 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	api.PUTNodes(mux, s)
 	api.GETEdges(mux, s)
 	api.PUTEdges(mux, s)
-	api.Upload(mux, s)
+	api.PUTGraph(mux, s)
 
 	// catch all
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -72,56 +72,6 @@ func GETNodes(mux *http.ServeMux, s store.Store) {
 	})
 }
 
-// GetGraph search and return nodes and edges used for a force directed graph
-// @Summary search return nodes and edges used for a force directed graph
-// @Description search return nodes and edges in a format that can be used in a force directed graph
-// @Tags graph
-// @Produce json
-// @Param term query string false "search term" default()
-// @Param snippetStart query string false "snippet start" default(<span class="text-red-500">)
-// @Param snippetEnd query string false "snippet start" default(</span>)
-// @Param tokens query int false "snippet tokens" minimum(1) maximum(64) default(10)
-// @Param limit query int false "limit results returned" minimum(1) default(1000)
-// @Success 200 {object} models.Graph "Payload used for drawing graphs."
-// @Failure 400 "Bad request"
-// @Failure 500 "Internal server error"
-// @Router /api/v1/graph [get]
-func GETGraph(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /api/v1/graph"))
-	mux.HandleFunc("GET /api/v1/graph", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		term := strings.Trim(r.URL.Query().Get("term"), "\"")
-		snippetStart := r.URL.Query().Get("snippetStart")
-		snippetEnd := r.URL.Query().Get("snippetEnd")
-
-		limit := 1000
-		tokens := 10
-
-		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
-			limit = l
-		}
-
-		if s, err := strconv.Atoi(r.URL.Query().Get("tokens")); err == nil {
-			tokens = s
-		}
-
-		graph, err := s.Graph(ctx, store.TermSearchArgs{Limit: limit, Term: term, SnippetTokens: tokens, SnippetStart: snippetStart, SnippetEnd: snippetEnd})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-		encoder := json.NewEncoder(w)
-		if err := encoder.Encode(graph); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
-}
-
 // PUTNodesReq is a request for adding/updating one or more nodes.
 type PUTNodesReq struct {
 	Nodes []models.Node
@@ -273,32 +223,72 @@ func PUTEdges(mux *http.ServeMux, s store.Store) {
 	})
 }
 
-type UploadReq struct {
-	PUTNodesReq
-	PUTEdgesReq
-}
-
-type UploadedResp struct {
-	Nodes []models.Node
-	Edges []models.Edge
-}
-
-// Upload uploads one or more nodes and edges sets.
-// @Summary Uploads one or more nodes and edges sets.
-// @Description Uploads one or more nodes and edges sets.
-// @Tags upload
+// GetGraph search and return nodes and edges used for a force directed graph
+// @Summary search return nodes and edges used for a force directed graph
+// @Description search return nodes and edges in a format that can be used in a force directed graph
+// @Tags graph
 // @Produce json
-// @Param nodes body UploadReq true "One or more nodes to add/update"
-// @Success 200 {array} UploadedResp "List of uploaded nodes and edges"
+// @Param term query string false "search term" default()
+// @Param snippetStart query string false "snippet start" default(<span class="text-red-500">)
+// @Param snippetEnd query string false "snippet start" default(</span>)
+// @Param tokens query int false "snippet tokens" minimum(1) maximum(64) default(10)
+// @Param limit query int false "limit results returned" minimum(1) default(1000)
+// @Success 200 {object} models.Graph "Payload used for drawing graphs."
 // @Failure 400 "Bad request"
 // @Failure 500 "Internal server error"
-// @Router /api/v1/upload [put]
-func Upload(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "PUT /api/v1/upload"))
-	mux.HandleFunc("PUT /api/v1/upload", func(w http.ResponseWriter, r *http.Request) {
+// @Router /api/v1/graph [get]
+func GETGraph(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /api/v1/graph"))
+	mux.HandleFunc("GET /api/v1/graph", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		req := UploadReq{}
+		term := strings.Trim(r.URL.Query().Get("term"), "\"")
+		snippetStart := r.URL.Query().Get("snippetStart")
+		snippetEnd := r.URL.Query().Get("snippetEnd")
+
+		limit := 1000
+		tokens := 10
+
+		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
+			limit = l
+		}
+
+		if s, err := strconv.Atoi(r.URL.Query().Get("tokens")); err == nil {
+			tokens = s
+		}
+
+		graph, err := s.Graph(ctx, store.TermSearchArgs{Limit: limit, Term: term, SnippetTokens: tokens, SnippetStart: snippetStart, SnippetEnd: snippetEnd})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(graph); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+// PUTGraph uploads a graph using a upsert strategy.
+// @Summary Uploads a graph using a upsert strategy.
+// @Description Uploads a graph using a upsert strategy.
+// @Tags upload
+// @Produce json
+// @Param nodes body models.Graph true "Graph that you are uploading"
+// @Success 200 {object} models.Graph "Uploaded graph."
+// @Failure 400 "Bad request"
+// @Failure 500 "Internal server error"
+// @Router /api/v1/graph [put]
+func PUTGraph(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "PUT /api/v1/graph"))
+	mux.HandleFunc("PUT /api/v1/graph", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		req := models.Graph{}
 		defer r.Body.Close()
 
 		decoder := json.NewDecoder(r.Body)
@@ -321,7 +311,7 @@ func Upload(mux *http.ServeMux, s store.Store) {
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		resp := UploadedResp{
+		resp := models.Graph{
 			Nodes: nodes,
 			Edges: edges,
 		}

@@ -186,6 +186,41 @@ const docTemplate = `{
                         "description": "Internal server error"
                     }
                 }
+            },
+            "put": {
+                "description": "Uploads a graph using a upsert strategy.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Uploads a graph using a upsert strategy.",
+                "parameters": [
+                    {
+                        "description": "Graph that you are uploading",
+                        "name": "nodes",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Graph"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Uploaded graph.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Graph"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
             }
         },
         "/api/v1/nodes": {
@@ -295,46 +330,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/upload": {
-            "put": {
-                "description": "Uploads one or more nodes and edges sets.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "upload"
-                ],
-                "summary": "Uploads one or more nodes and edges sets.",
-                "parameters": [
-                    {
-                        "description": "One or more nodes to add/update",
-                        "name": "nodes",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.UploadReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of uploaded nodes and edges",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/api.UploadedResp"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "500": {
-                        "description": "Internal server error"
-                    }
-                }
-            }
-        },
         "/static": {
             "get": {
                 "description": "Static serves up static files",
@@ -358,40 +353,6 @@ const docTemplate = `{
         "api.PUTNodesReq": {
             "type": "object",
             "properties": {
-                "nodes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Node"
-                    }
-                }
-            }
-        },
-        "api.UploadReq": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Edge"
-                    }
-                },
-                "nodes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Node"
-                    }
-                }
-            }
-        },
-        "api.UploadedResp": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Edge"
-                    }
-                },
                 "nodes": {
                     "type": "array",
                     "items": {
@@ -436,74 +397,17 @@ const docTemplate = `{
         "models.Graph": {
             "type": "object",
             "properties": {
-                "links": {
+                "edges": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.GraphEdge"
+                        "$ref": "#/definitions/models.Edge"
                     }
                 },
                 "nodes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.GraphNode"
+                        "$ref": "#/definitions/models.Node"
                     }
-                }
-            }
-        },
-        "models.GraphEdge": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "properties": {
-                    "$ref": "#/definitions/models.Properties"
-                },
-                "snippet": {
-                    "description": "this is a special field show a small snippet of the match terms",
-                    "type": "string"
-                },
-                "source": {
-                    "type": "string"
-                },
-                "target": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "weight": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.GraphNode": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "properties": {
-                    "$ref": "#/definitions/models.Properties"
-                },
-                "snippet": {
-                    "description": "this is a special field show a small snippet of the match terms",
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
                 }
             }
         },

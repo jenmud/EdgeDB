@@ -527,8 +527,8 @@ func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Gr
 	}
 
 	graph := models.Graph{
-		Nodes: make([]models.GraphNode, 0),
-		Links: make([]models.GraphEdge, 0),
+		Nodes: make([]models.Node, 0),
+		Edges: make([]models.Edge, 0),
 	}
 
 	// FIXME: This is not performant because it is doing two complex queries
@@ -547,7 +547,7 @@ func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Gr
 		return graph, err
 	}
 
-	graph.AddLinks(edges...)
+	graph.AddEdges(edges...)
 
 	return graph, nil
 }

@@ -2,12 +2,15 @@ function MakeGraph(target, data) {
 
     // lets add some particle speeds to the edges
     // FIXME: this should be read from a property on the edge/link
-    data.links.forEach((i) => {
+    data.edges.forEach((i) => {
         i.value = 1;
     });
 
     const Graph = new ForceGraph(document.getElementById(target))
-    .graphData(data)
+    .graphData({
+        nodes: data.nodes,
+        links: data.edges // pass edges as links
+    })
     .nodeId('id')
     .nodeLabel('snippet')
     .nodeAutoColorBy('label')
