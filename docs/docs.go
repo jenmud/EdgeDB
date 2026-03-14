@@ -367,6 +367,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "from": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -380,10 +383,7 @@ const docTemplate = `{
                     "description": "this is a special field show a small snippet of the match terms",
                     "type": "string"
                 },
-                "source": {
-                    "type": "integer"
-                },
-                "target": {
+                "to": {
                     "type": "integer"
                 },
                 "updated_at": {
