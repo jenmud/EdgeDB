@@ -25,12 +25,14 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [x] Add api and ui for nodes and edges.
 - [x] Add a simple table displaying nodes and edges.
 - [x] Tables should be filterable.
-- [ ] Swap /v1/ui to /ui/v1
-- [ ] This of a better way to represent the nodes and edges tables.
+- [x] Swap /v1/ui to /ui/v1
+- [x] This of a better way to represent the nodes and edges tables.
 - [ ] Add in a detail page for a single node or edge.
 - [ ] ID's in the nodes and edges table to be hyperlinks to the detail page of the node or edge.
-- [ ] Add in the force directed graph in to the UI. Look at using https://github.com/vasturiano/force-graph
+- [x] Add in the force directed graph in to the UI. Look at using https://github.com/vasturiano/force-graph
 - [ ] Make the store distrabuted using raft.
+- [ ] Make the graph on the UI interactive. Example clicks etc..... This can be done when I have a better idea how I want to use it.
+- [ ] Change the upload to take a graph formatted upload file.
 
 
 ```js
