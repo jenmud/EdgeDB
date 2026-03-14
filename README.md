@@ -33,8 +33,9 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [x] Add in the force directed graph in to the UI. Look at using https://github.com/vasturiano/force-graph
 - [ ] Make the store distrabuted using raft.
 - [ ] Make the graph on the UI interactive. Example clicks etc..... This can be done when I have a better idea how I want to use it.
-- [ ] Change the upload to take a graph formatted upload file.
+- [x] Change the upload to take a graph formatted upload file.
 - [ ] I don't like how I am now passing the data to the graph UI. Think of something better. (works for now)
+- [ ] There is no advantage to having two separate tables for nodes and edges. The data is too similar. Instead have a type column and also make the FTS figure out the type.
 
 
 ```js
