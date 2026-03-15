@@ -24,6 +24,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
+// DefaultLimit is the default limit of return items to return.
+const DefaultLimit int = 1000
+
 //go:embed "migrations/*.sql"
 var migrations embed.FS
 var once sync.Once
@@ -197,18 +200,21 @@ func (s *Store) UpsertNodes(ctx context.Context, n ...models.Node) ([]models.Nod
 		}
 
 		query := `
-			INSERT INTO nodes (id, label, properties)
+			INSERT INTO items (id, label, properties)
 			VALUES (?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 				id = excluded.id,
 				label = excluded.label,
 				properties = excluded.properties
-			RETURNING id, label, properties;
+			RETURNING id, created_at, updated_at, label, properties;
 		`
 
 		row := tx.QueryRowContext(ctx, query, id, n.Label, props)
 
-		if err := row.Scan(&node.ID, &node.Label, &props); err != nil {
+		var createdAt int64
+		var updatedAt int64
+
+		if err := row.Scan(&node.ID, &createdAt, &updatedAt, &node.Label, &props); err != nil {
 			return nodes, err
 		}
 
@@ -216,14 +222,14 @@ func (s *Store) UpsertNodes(ctx context.Context, n ...models.Node) ([]models.Nod
 			return nodes, err
 		}
 
+		node.CreatedAt = time.Unix(createdAt, 0)
+		node.UpdatedAt = time.Unix(updatedAt, 0)
+
 		nodes[i] = node
 	}
 
 	return nodes, tx.Commit()
 }
-
-// DefaultLimit is the default limit of return items to return.
-const DefaultLimit int = 1000
 
 // NodesTermSearch applies the search term and returns nodes with match. Limit defaults to 1000 if limit is 0
 func (s *Store) NodesTermSearch(ctx context.Context, args store.TermSearchArgs) ([]models.Node, error) {
@@ -254,7 +260,7 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	query := `
 	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
 	FROM fts
-	JOIN nodes n ON n.id = fts.id
+	JOIN items n ON n.id = fts.id
 	WHERE fts.type = 'node' AND fts MATCH ?
 	ORDER BY bm25(fts)
 	LIMIT ?;
@@ -299,7 +305,8 @@ func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node,
 
 	query := `
 	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties
-	FROM nodes n
+	FROM items n
+	WHERE n.id > 0 AND n.from_id = 0 AND n.to_id = 0
 	LIMIT ?;
 	`
 
@@ -367,7 +374,7 @@ func (s *Store) UpsertEdges(ctx context.Context, e ...models.Edge) ([]models.Edg
 		}
 
 		query := `
-			INSERT INTO edges (id, from_id, label, to_id, weight, properties)
+			INSERT INTO items (id, from_id, label, to_id, weight, properties)
 			VALUES (?, ?, ?, ?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 				id = excluded.id,
@@ -376,18 +383,24 @@ func (s *Store) UpsertEdges(ctx context.Context, e ...models.Edge) ([]models.Edg
 				to_id = excluded.to_id,
 				weight = excluded.weight,
 				properties = excluded.properties
-			RETURNING id, from_id, label, to_id, weight, properties;
+			RETURNING id, created_at, updated_at, from_id, label, to_id, weight, properties;
 		`
 
 		row := tx.QueryRowContext(ctx, query, id, e.From, e.Label, e.To, e.Weight, props)
 
-		if err := row.Scan(&edge.ID, &edge.From, &edge.Label, &edge.To, &edge.Weight, &props); err != nil {
+		var createdAt int64
+		var updatedAt int64
+
+		if err := row.Scan(&edge.ID, &createdAt, &updatedAt, &edge.From, &edge.Label, &edge.To, &edge.Weight, &props); err != nil {
 			return edges, err
 		}
 
 		if err := edge.Properties.FromBytes(props); err != nil {
 			return edges, err
 		}
+
+		edge.CreatedAt = time.Unix(createdAt, 0)
+		edge.UpdatedAt = time.Unix(updatedAt, 0)
 
 		edges[i] = edge
 	}
@@ -424,7 +437,7 @@ func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	query := `
 	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.weight, e.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
 	FROM fts
-	JOIN edges e ON e.id = fts.id
+	JOIN items e ON e.id = fts.id
 	WHERE fts.type = 'edge' AND fts MATCH ?
 	ORDER BY bm25(fts)
 	LIMIT ?;
@@ -469,7 +482,8 @@ func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge,
 
 	query := `
 	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.weight, e.properties
-	FROM edges e
+	FROM items e
+	WHERE e.id > 0 AND e.from_id > 0 AND e.to_id > 0
 	LIMIT ?;
 	`
 
@@ -531,23 +545,98 @@ func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Gr
 		Edges: make([]models.Edge, 0),
 	}
 
-	// FIXME: This is not performant because it is doing two complex queries
-	//        Need to figure out a single DB query to do the term query on both nodes and edges
-	//        And it should apply the limit to each, eg: if the limit is a 100, it will return a max of 100 nodes and 100 edges and not 100 combined
+	if args.Term == "" {
+		args.Term = "type:node OR type:edge"
+	}
 
-	nodes, err := s.NodesTermSearch(ctx, args)
+	query := `
+	SELECT
+		i.id,
+		(
+			CASE
+				WHEN i.from_id = 0 AND i.to_id = 0 THEN 'node'
+				WHEN i.from_id > 0 AND i.to_id > 0 THEN 'edge'
+			END
+		) AS type,
+		i.created_at,
+		i.updated_at,
+		i.from_id,
+		i.label,
+		i.to_id,
+		i.weight,
+		i.properties,
+		snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
+	FROM fts
+	JOIN items i ON i.id = fts.id
+	WHERE fts MATCH ?
+	ORDER BY bm25(fts)
+	LIMIT ?;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.Limit)
 	if err != nil {
 		return graph, err
 	}
 
-	graph.AddNodes(nodes...)
+	for rows.Next() {
 
-	edges, err := s.EdgesTermSearch(ctx, args)
-	if err != nil {
-		return graph, err
+		var id uint64
+		var itemType string
+		var createdAt int64
+		var updatedAt int64
+		var from_id uint64
+		var label string
+		var to_id uint64
+		var weight int
+		var props []byte
+		var snippet string
+
+		if err := rows.Scan(&id, &itemType, &createdAt, &updatedAt, &from_id, &label, &to_id, &weight, &props, &snippet); err != nil {
+			return graph, err
+		}
+
+		properties := models.Properties{}
+
+		if err := properties.FromBytes(props); err != nil {
+			return graph, err
+		}
+
+		switch itemType {
+
+		case "node":
+			graph.Nodes = append(
+				graph.Nodes,
+				models.Node{
+					ID:         id,
+					CreatedAt:  time.Unix(createdAt, 0),
+					UpdatedAt:  time.Unix(updatedAt, 0),
+					Label:      label,
+					Properties: properties,
+					Snippet:    snippet,
+				},
+			)
+
+		case "edge":
+			graph.Edges = append(
+				graph.Edges,
+				models.Edge{
+					ID:         id,
+					CreatedAt:  time.Unix(createdAt, 0),
+					UpdatedAt:  time.Unix(updatedAt, 0),
+					From:       from_id,
+					Label:      label,
+					To:         to_id,
+					Weight:     weight,
+					Properties: properties,
+					Snippet:    snippet,
+				},
+			)
+
+		default:
+			return graph, fmt.Errorf("unsupported type: %s", itemType)
+		}
+
 	}
-
-	graph.AddEdges(edges...)
 
 	return graph, nil
 }
