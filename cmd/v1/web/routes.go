@@ -67,8 +67,8 @@ func GraphSearch(mux *http.ServeMux, s store.Store) {
 }
 
 func GraphTable(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/table"))
-	mux.HandleFunc("GET /ui/v1/graph/table", func(w http.ResponseWriter, r *http.Request) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/table"))
+	mux.HandleFunc("GET /ui/v1/table", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		graph, err := s.Graph(ctx, store.TermSearchArgs{})
@@ -78,6 +78,34 @@ func GraphTable(mux *http.ServeMux, s store.Store) {
 		}
 
 		component := pages.GraphTablePage(graph)
+		component.Render(ctx, w)
+	})
+}
+
+func TableSearch(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/table"))
+	mux.HandleFunc("GET /ui/v1/search/table", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		type Store struct {
+			Limit int    `json:"limit"`
+			Term  string `json:"term"`
+		}
+
+		queryStore := Store{}
+
+		if err := datastar.ReadSignals(r, &queryStore); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		graph, err := s.Graph(ctx, store.TermSearchArgs{Term: queryStore.Term, Limit: queryStore.Limit})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := components.GraphTable(graph)
 		component.Render(ctx, w)
 	})
 }

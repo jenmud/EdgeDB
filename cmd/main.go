@@ -111,11 +111,13 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	web.StaticAssets(mux)
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
-	// ui routes
+	// ui routes -- NOTE: order matters here
 	web.Index(mux, s)
+	web.GraphTable(mux, s)
+	web.TableSearch(mux, s)
+
 	web.Graph(mux, s)
 	web.GraphSearch(mux, s)
-	web.GraphTable(mux, s)
 
 	// api routes
 	api.GETGraph(mux, s)
@@ -126,14 +128,14 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	api.PUTGraph(mux, s)
 
 	// catch all
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			return
-		}
+	//mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//	if r.Method != http.MethodGet {
+	//		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	//		return
+	//	}
 
-		http.Redirect(w, r, "/ui/v1", http.StatusMovedPermanently)
-	})
+	//	http.Redirect(w, r, "/ui/v1", http.StatusMovedPermanently)
+	//})
 
 	return corsMiddleware(mux)
 }

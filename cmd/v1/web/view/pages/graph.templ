@@ -18,7 +18,7 @@ templ GraphPage(graphURL string) {
 
 templ GraphTablePage(g models.Graph) {
     @layout.Base("EdgeDB") {
-        @components.SearchTerm("/ui/v1/search/graph/table")
+        @components.SearchTerm("/ui/v1/search/table")
         <div class="divider"></div>
         @components.GraphTable(g)
     }
