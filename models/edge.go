@@ -11,8 +11,8 @@ type Edge struct {
 	UpdatedAt  time.Time  `db:"updated_at" json:"updated_at"`
 	Label      string     `db:"label" json:"label"`
 	Properties Properties `db:"properties" json:"properties"`
-	From       uint64     `db:"from_id" json:"from"`
-	To         uint64     `db:"to_id" json:"to"`
+	From       uint64     `db:"from_id" json:"from_id"`
+	To         uint64     `db:"to_id" json:"to_id"`
 	Weight     int        `db:"weight" json:"weight"`
 	Snippet    string     `db:"-" json:"snippet,omitempty"` // this is a special field show a small snippet of the match terms
 }

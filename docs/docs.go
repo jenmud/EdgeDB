@@ -193,7 +193,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "upload"
+                    "graph"
                 ],
                 "summary": "Uploads a graph using a upsert strategy.",
                 "parameters": [
@@ -367,7 +367,7 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
-                "from": {
+                "from_id": {
                     "type": "integer"
                 },
                 "id": {
@@ -383,7 +383,7 @@ const docTemplate = `{
                     "description": "this is a special field show a small snippet of the match terms",
                     "type": "string"
                 },
-                "to": {
+                "to_id": {
                     "type": "integer"
                 },
                 "updated_at": {

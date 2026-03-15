@@ -276,7 +276,7 @@ func GETGraph(mux *http.ServeMux, s store.Store) {
 // PUTGraph uploads a graph using a upsert strategy.
 // @Summary Uploads a graph using a upsert strategy.
 // @Description Uploads a graph using a upsert strategy.
-// @Tags upload
+// @Tags graph
 // @Produce json
 // @Param nodes body models.Graph true "Graph that you are uploading"
 // @Success 200 {object} models.Graph "Uploaded graph."

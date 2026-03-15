@@ -18,7 +18,6 @@ def create_graph(bible_data):
     nodes = []
     edges = []
     node_id = 1
-    edge_id = 1
     book_nodes = {}
 
     for book in bible_data:
@@ -49,26 +48,22 @@ def create_graph(bible_data):
 
             # Edge: book -> chapter
             edges.append({
-                "id": edge_id,
                 "from_id": book_node_id,
                 "to_id": chapter_node_id,
                 "label": "has_chapter",
                 "weight": 1,
                 "properties": {}
             })
-            edge_id += 1
 
             # Optional: link previous chapter -> current chapter
             if previous_chapter_node:
                 edges.append({
-                    "id": edge_id,
                     "from_id": previous_chapter_node,
                     "to_id": chapter_node_id,
                     "label": "next_chapter",
                     "weight": 1,
                     "properties": {}
                 })
-                edge_id += 1
             previous_chapter_node = chapter_node_id
 
             previous_verse_node = None
@@ -88,26 +83,22 @@ def create_graph(bible_data):
 
                 # Edge: chapter -> verse
                 edges.append({
-                    "id": edge_id,
                     "from_id": chapter_node_id,
                     "to_id": verse_node_id,
                     "label": "has_verse",
                     "weight": 1,
                     "properties": {}
                 })
-                edge_id += 1
 
                 # Edge: previous verse -> current verse
                 if previous_verse_node:
                     edges.append({
-                        "id": edge_id,
                         "from_id": previous_verse_node,
                         "to_id": verse_node_id,
                         "label": "next_verse",
                         "weight": 1,
                         "properties": {}
                     })
-                    edge_id += 1
                 previous_verse_node = verse_node_id
 
     return {"nodes": nodes, "edges": edges}

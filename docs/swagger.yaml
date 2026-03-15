@@ -18,7 +18,7 @@ definitions:
     properties:
       created_at:
         type: string
-      from:
+      from_id:
         type: integer
       id:
         type: integer
@@ -29,7 +29,7 @@ definitions:
       snippet:
         description: this is a special field show a small snippet of the match terms
         type: string
-      to:
+      to_id:
         type: integer
       updated_at:
         type: string
@@ -214,7 +214,7 @@ paths:
           description: Internal server error
       summary: Uploads a graph using a upsert strategy.
       tags:
-      - upload
+      - graph
   /api/v1/nodes:
     get:
       description: Search and return nodes
