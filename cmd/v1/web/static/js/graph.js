@@ -14,8 +14,8 @@ function FetchGraph(target, graphURL) {
             .nodeLabel('snippet')
             .nodeAutoColorBy('label')
             .cooldownTicks(100)
-            .maxZoom(10)    // closer zoom limit
-            .minZoom(3)   // zoomed out limit
+            //.maxZoom(10)    // closer zoom limit
+            //.minZoom(3)   // zoomed out limit
             .linkSource('from_id')
             .linkTarget('to_id')
             .linkAutoColorBy(d => d.from_id.label)
