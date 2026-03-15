@@ -111,9 +111,11 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	web.StaticAssets(mux)
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
+	// ui routes
 	web.Index(mux, s)
 	web.Graph(mux, s)
 	web.GraphSearch(mux, s)
+	web.GraphTable(mux, s)
 
 	// api routes
 	api.GETGraph(mux, s)

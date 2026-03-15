@@ -7,17 +7,19 @@ import (
 )
 
 
-templ GraphPage(g models.Graph) {
+templ GraphPage(graphURL string) {
     @layout.Base("EdgeDB") {
         @components.SearchTerm("/ui/v1/search/graph")
         <div class="divider"></div>
-        @GraphContent(g)
+        @components.GraphContent(graphURL)
     }
 }
 
 
-templ GraphContent(g models.Graph) {
-    <div id="graph-content">
-        @components.Graph(g)
-    </div>
+templ GraphTablePage(g models.Graph) {
+    @layout.Base("EdgeDB") {
+        @components.SearchTerm("/ui/v1/search/graph/table")
+        <div class="divider"></div>
+        @components.GraphTable(g)
+    }
 }

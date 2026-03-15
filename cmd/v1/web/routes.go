@@ -1,10 +1,12 @@
 package web
 
 import (
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
 
+	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
 	"github.com/starfederation/datastar-go/datastar"
@@ -37,14 +39,7 @@ func Graph(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph"))
 	mux.HandleFunc("GET /ui/v1/graph", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
-		graph, err := s.Graph(ctx, store.TermSearchArgs{})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		component := pages.GraphPage(graph)
+		component := pages.GraphPage("/api/v1/graph")
 		component.Render(ctx, w)
 	})
 }
@@ -66,13 +61,23 @@ func GraphSearch(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		graph, err := s.Graph(ctx, store.TermSearchArgs{Term: queryStore.Term, Limit: queryStore.Limit})
+		component := components.GraphContent(fmt.Sprintf("/api/v1/graph?term=%s&limit=%d", queryStore.Term, queryStore.Limit))
+		component.Render(ctx, w)
+	})
+}
+
+func GraphTable(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/table"))
+	mux.HandleFunc("GET /ui/v1/graph/table", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		graph, err := s.Graph(ctx, store.TermSearchArgs{})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		component := pages.GraphContent(graph)
+		component := pages.GraphTablePage(graph)
 		component.Render(ctx, w)
 	})
 }
