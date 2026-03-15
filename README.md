@@ -35,7 +35,9 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] Make the graph on the UI interactive. Example clicks etc..... This can be done when I have a better idea how I want to use it.
 - [x] Change the upload to take a graph formatted upload file.
 - [ ] I don't like how I am now passing the data to the graph UI. Think of something better. (works for now)
-- [ ] There is no advantage to having two separate tables for nodes and edges. The data is too similar. Instead have a type column and also make the FTS figure out the type.
+- [x] There is no advantage to having two separate tables for nodes and edges. The data is too similar. Instead have a type column and also make the FTS figure out the type.
+- [ ] Graph is using the limit which means for large graphs the search limits to the default 1000 and that means only nodes returned. We need nodes and edges.
+      One thing that we can do is for a node, it will automatically include the edges that nodes belongs to, and for edges it will fetch the nodes that are not included in the search result set.
 
 
 ```js
