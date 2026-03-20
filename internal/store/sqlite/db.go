@@ -571,18 +571,24 @@ func missingNodes(g models.Graph) []uint64 {
 		got[n.ID] = struct{}{}
 	}
 
-	missing := []uint64{}
+	missing := make(map[uint64]struct{})
+
 	for _, e := range g.Edges {
 		if _, found := got[e.From]; !found {
-			missing = append(missing, e.From)
+			missing[e.From] = struct{}{}
 		}
 
 		if _, found := got[e.To]; !found {
-			missing = append(missing, e.From)
+			missing[e.To] = struct{}{}
 		}
 	}
 
-	return missing
+	missingIDS := make([]uint64, 0, len(missing))
+	for id := range missing {
+		missingIDS = append(missingIDS, id)
+	}
+
+	return missingIDS
 }
 
 // Graph applies the search term and returns the graph containing matched nodes and edges. Limit defaults to 1000 if limit is 0
