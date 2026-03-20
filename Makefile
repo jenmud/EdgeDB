@@ -17,7 +17,7 @@ install-go-tools:
 	$(GO) install tool
 
 
-install:install-gotests install-go-tools install-ui-tools
+install: tidy install-gotests install-go-tools install-ui-tools
 
 
 # If you want to use vscode to generate tests, you will need to have gotests installed on the machine
