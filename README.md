@@ -32,6 +32,8 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] Graph is using the limit which means for large graphs the search limits to the default 1000 and that means only nodes returned. We need nodes and edges.
       One thing that we can do is for a node, it will automatically include the edges that nodes belongs to, and for edges it will fetch the nodes that are not included in the search result set.
 - [ ] Make graph be able to run in WASM - this would be a nice to have if possible.
+- [ ] UI graph to build and fetch nodes and edges when clicking on a node.
+- [ ] When fetching edges, nodes that are not already in the nodes list should be added. This could be an expensive operation so I may need to think of a nice way to do this whilst being performant.
 - [ ] UI to add and delete nodes and edges
 - [ ] Implement some sort of query language
 - [ ] Add in pagination
