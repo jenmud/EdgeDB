@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -523,18 +522,31 @@ func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge,
 func nodesByID(ctx context.Context, db *sql.DB, ids ...uint64) ([]models.Node, error) {
 	nodes := make([]models.Node, 0, len(ids))
 
-	query := `
-		SELECT n.id, n.created_at, n.updated_at, n.label, n.properties
-		FROM items n
-		WHERE n.ID IN (?);
-	`
+	/*
+		You need this ugly syntax because you need to build a query string with all the ID's
+		Which means that you need a `?` for every ID.
+	*/
+	placeholders := make([]string, len(ids))
+	args := make([]any, len(ids))
 
-	args := make([]string, len(ids))
 	for i, id := range ids {
-		args[i] = strconv.FormatInt(int64(id), 10)
+		placeholders[i] = "?"
+		args[i] = id
 	}
 
-	rows, err := db.QueryContext(ctx, query, strings.Join(args, ","))
+	/*
+		Build the query string filling all the placeholder with `?` for every ID.
+	*/
+	query := fmt.Sprintf(
+		`
+			SELECT n.id, n.created_at, n.updated_at, n.label, n.properties
+			FROM items n
+			WHERE n.id IN (%s);
+		`,
+		strings.Join(placeholders, ","),
+	)
+
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
