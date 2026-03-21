@@ -76,5 +76,10 @@ END;
 CREATE TRIGGER IF NOT EXISTS items_after_delete
 AFTER DELETE ON items
 BEGIN
+    -- clean the full text search
     DELETE FROM fts WHERE id = OLD.id;
+
+    -- make sure that the edges for the node are deleted to
+    DELETE FROM items WHERE from_id = OLD.id;
+    DELETE FROM items WHERE to_id = OLD.id;
 END;
