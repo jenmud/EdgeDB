@@ -518,6 +518,91 @@ func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge,
 	return edges, nil
 }
 
+// nodesByID is a helper used to retrieve all nodes with the given IDs.
+func nodesByID(ctx context.Context, db *sql.DB, ids ...uint64) ([]models.Node, error) {
+	nodes := make([]models.Node, 0, len(ids))
+
+	/*
+		You need this ugly syntax because you need to build a query string with all the ID's
+		Which means that you need a `?` for every ID.
+	*/
+	placeholders := make([]string, len(ids))
+	args := make([]any, len(ids))
+
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	/*
+		Build the query string filling all the placeholder with `?` for every ID.
+	*/
+	query := fmt.Sprintf(
+		`
+			SELECT n.id, n.created_at, n.updated_at, n.label, n.properties
+			FROM items n
+			WHERE n.id IN (%s);
+		`,
+		strings.Join(placeholders, ","),
+	)
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		n := models.Node{}
+
+		var createdAt int64
+		var updatedAt int64
+
+		var props []byte
+		if err := rows.Scan(&n.ID, &createdAt, &updatedAt, &n.Label, &props); err != nil {
+			return nodes, err
+		}
+
+		if err := n.Properties.FromBytes(props); err != nil {
+			return nodes, err
+		}
+
+		n.CreatedAt = time.Unix(createdAt, 0)
+		n.UpdatedAt = time.Unix(updatedAt, 0)
+
+		nodes = append(nodes, n)
+	}
+
+	return nodes, nil
+}
+
+// missingNodes is a helper for returning missing node ID's from edges.
+func missingNodes(g models.Graph) []uint64 {
+	// make a lookup map of node existing IDS
+	got := make(map[uint64]struct{})
+	for _, n := range g.Nodes {
+		got[n.ID] = struct{}{}
+	}
+
+	missing := make(map[uint64]struct{})
+
+	for _, e := range g.Edges {
+		if _, found := got[e.From]; !found {
+			missing[e.From] = struct{}{}
+		}
+
+		if _, found := got[e.To]; !found {
+			missing[e.To] = struct{}{}
+		}
+	}
+
+	missingIDS := make([]uint64, 0, len(missing))
+	for id := range missing {
+		missingIDS = append(missingIDS, id)
+	}
+
+	return missingIDS
+}
+
 // Graph applies the search term and returns the graph containing matched nodes and edges. Limit defaults to 1000 if limit is 0
 func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Graph, error) {
 	if args.Limit == 0 {
@@ -638,5 +723,13 @@ func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Gr
 
 	}
 
+	// check for missing nodes and if any missing nodes found, fetch the missing.
+	missing := missingNodes(graph)
+	missingNodesFetched, err := nodesByID(ctx, s.db, missing...)
+	if err != nil {
+		return graph, err
+	}
+
+	graph.Nodes = append(graph.Nodes, missingNodesFetched...)
 	return graph, nil
 }

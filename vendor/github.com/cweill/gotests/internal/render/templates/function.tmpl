@@ -1,0 +1,142 @@
+{{define "function"}}
+{{- $f := .}}
+
+func {{.TestName}}(t *testing.T) {
+	{{- if .Parallel}}
+	t.Parallel()
+	{{- end}}
+	{{- with .Receiver}}
+		{{- if .IsStruct}}
+			{{- if .Fields}}
+				type fields struct {
+				{{- range .Fields}}
+					{{Field .}} {{.Type}}
+				{{- end}}
+				}
+			{{- end}}
+		{{- end}}
+	{{- end}}
+	{{- if .TestParameters}}
+	type args struct {
+		{{- range .TestParameters}}
+				{{Param .}} {{FieldType $ .}}
+		{{- end}}
+	}
+	{{- end}}
+	tests := {{ if .Named}}map[string]struct{{else}}[]struct{{end}} {
+		{{ if (not .Named)}}name string{{end}}
+		{{- with .Receiver}}
+			{{- if and .IsStruct .Fields}}
+				fields fields
+			{{- else}}
+				{{Receiver .}} {{FieldType $ .Field}}
+			{{- end}}
+		{{- end}}
+		{{- if .TestParameters}}
+			args args
+		{{- end}}
+		{{- range .TestResults}}
+			{{Want .}} {{FieldType $ .}}
+		{{- end}}
+		{{- if .ReturnsError}}
+			wantErr bool
+		{{- end}}
+	}{
+		{{- if .AIGeneratedCases}}
+		{{- $fn := . -}}
+		{{- range $i, $tc := .AIGeneratedCases}}
+		{{if $fn.Named}}{{printf "%q" $tc.Name}}: {{end}}{
+			{{- if $fn.Named}}{{else}}
+			name: {{printf "%q" $tc.Name}},
+			{{- end}}
+			{{- with $fn.Receiver}}
+				{{- if and .IsStruct .Fields}}
+			fields: fields{
+				{{- range .Fields}}
+				{{Field .}}: nil, // TODO: Initialize from AI case
+				{{- end}}
+			},
+				{{- else}}
+			{{Receiver .}}: nil, // TODO: Initialize receiver from AI case
+				{{- end}}
+			{{- end}}
+			{{- if $fn.TestParameters}}
+			args: args{
+				{{- range $param := $fn.TestParameters}}
+				{{Param $param}}: {{index $tc.Args (Param $param)}},
+				{{- end}}
+			},
+			{{- end}}
+			{{- range $result := $fn.TestResults}}
+			{{Want $result}}: {{index $tc.Want (Want $result)}},
+			{{- end}}
+			{{- if $fn.ReturnsError}}
+			wantErr: {{$tc.WantErr}},
+			{{- end}}
+		},
+		{{- end}}
+		{{- else}}
+		// TODO: Add test cases.
+		{{- end}}
+	}
+	for {{if (or .Subtests (not .IsNaked))}} {{if .Named}}name{{else}}_{{end}}, tt := {{end}} range tests {
+		{{- if .Subtests}}
+		t.Run({{if .Named}}name{{else}}tt.name{{end}}, func(t *testing.T) {
+			{{- if .Parallel}}t.Parallel(){{end}}
+		{{- end}}
+			{{- with .Receiver}}
+				{{- if .IsStruct}}
+					{{Receiver .}} := {{if .Type.IsStar}}&{{end}}{{ReceiverType $ .}}{
+					{{- range .Fields}}
+						{{.Name}}: tt.fields.{{Field .}},
+					{{- end}}
+					}
+				{{- end}}
+			{{- end}}
+			{{- range .Parameters}}
+				{{- if .IsWriter}}
+					{{Param .}} := &bytes.Buffer{}
+				{{- end}}
+			{{- end}}
+			{{- if and (not .OnlyReturnsError) (not .OnlyReturnsOneValue) }}
+				{{template "results" $f}} {{template "call" $f}}
+			{{- end}}
+			{{- if .ReturnsError}}
+				if {{if .OnlyReturnsError}} err := {{template "call" $f}}; {{end}} (err != nil) != tt.wantErr {
+					t.{{if and .TestResults .Subtests}}Fatalf{{else}}Errorf{{end}}("{{template "message" $f}} error = %v, wantErr %v", {{template "inputs" $f}} err, tt.wantErr)
+					{{- if and .TestResults (not .Subtests)}}
+						continue
+					{{- end}}
+				}
+				{{- if .TestResults}}
+				if tt.wantErr {
+					return
+				}
+				{{- end}}
+			{{- end}}
+			{{- range .TestResults}}
+				{{- if .IsWriter}}
+					if {{Got .}} := {{Param .}}.String(); {{Got .}} != tt.{{Want .}} {
+				{{- else if .IsBasicType}}
+					if {{if $f.OnlyReturnsOneValue}}{{Got .}} := {{template "inline" $f}}; {{end}} {{Got .}} != tt.{{Want .}} {
+				{{- else if $f.UseGoCmp}}
+					if {{if $f.OnlyReturnsOneValue}}{{Got .}} := {{template "inline" $f}}; {{end}} !cmp.Equal(tt.{{Want .}}, {{Got .}}) {
+				{{- else}}
+					if {{if $f.OnlyReturnsOneValue}}{{Got .}} := {{template "inline" $f}}; {{end}} !reflect.DeepEqual({{Got .}}, tt.{{Want .}}) {
+				{{- end}}
+				{{- if $f.UseGoCmp}}
+					{{- if not .IsBasicType}}
+				t.Errorf("{{template "message" $f}} {{if $f.ReturnsMultiple}}{{Got .}} {{end}}= %v, want %v\ndiff=%s", {{template "inputs" $f}} {{Got .}}, tt.{{Want .}}, cmp.Diff(tt.{{Want .}}, {{Got .}}))
+					{{- else}}
+				t.Errorf("{{template "message" $f}} {{if $f.ReturnsMultiple}}{{Got .}} {{end}}= %v, want %v", {{template "inputs" $f}} {{Got .}}, tt.{{Want .}})
+					{{- end}}
+				{{- else}}
+				t.Errorf("{{template "message" $f}} {{if $f.ReturnsMultiple}}{{Got .}} {{end}}= %v, want %v", {{template "inputs" $f}} {{Got .}}, tt.{{Want .}})
+				{{- end}}
+				}
+			{{- end}}
+		{{- if .Subtests }} }) {{- end -}}
+	}
+}
+
+{{end}}

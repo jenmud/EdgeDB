@@ -1,0 +1,6 @@
+{
+	"autogen": "<none>",
+	"autoupdate": ".",
+	"autotag": "darwin|freebsd|linux|openbsd|windows",
+	"test": "."
+}
