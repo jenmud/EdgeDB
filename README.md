@@ -36,7 +36,6 @@ Once running, navigate to http://localhost:8080/v1/ui
       One thing that we can do is for a node, it will automatically include the edges that nodes belongs to, and for edges it will fetch the nodes that are not included in the search result set.
 - [ ] Make graph be able to run in WASM - this would be a nice to have if possible.
 - [ ] UI graph to build and fetch nodes and edges when clicking on a node.
-- [ ] When fetching edges, nodes that are not already in the nodes list should be added. This could be an expensive operation so I may need to think of a nice way to do this whilst being performant.
 - [ ] UI to add and delete nodes and edges
 - [ ] Implement some sort of query language
 - [ ] Add in pagination
@@ -52,3 +51,4 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [x] Change the upload to take a graph formatted upload file.
 - [x] There is no advantage to having two separate tables for nodes and edges. The data is too similar. Instead have a type column and also make the FTS figure out the type.
 - [x] I don't like how I am now passing the data to the graph UI. Think of something better. (works for now)
+- [x] When fetching edges, nodes that are not already in the nodes list should be added. This could be an expensive operation so I may need to think of a nice way to do this whilst being performant.
