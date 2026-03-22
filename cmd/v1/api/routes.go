@@ -323,3 +323,51 @@ func PUTGraph(mux *http.ServeMux, s store.Store) {
 		}
 	})
 }
+
+// GETSubGraphByNode returns a sub-graph from a node.
+// @Summary Returns a graph from a node.
+// @Description Returns a graph from a node.
+// @Tags graph
+// @Produce json
+// @Param id path int true "Node id"
+// @Param limit query int false "how many levels deep to return" minimum(1) default(1)
+// @Success 200 {object} models.Graph "Payload used for drawing graphs."
+// @Failure 404 "Not found"
+// @Failure 500 "Internal server error"
+// @Router /api/v1/graph/nodes/{id} [get]
+func GETSubGraphByNode(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /api/v1/graph/nodes/{id}"))
+	mux.HandleFunc("GET /api/v1/graph/nodes/{id}", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		args := store.SubGraphArgs{Limit: 1}
+
+		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
+			args.Limit = l
+		}
+
+		idstr := r.PathValue("id")
+		id, err := strconv.ParseUint(idstr, 10, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		args.FromNodeID = id
+		args.ToNodeID = id
+
+		graph, err := s.SubGraph(ctx, args)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(graph); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+}

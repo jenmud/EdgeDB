@@ -215,6 +215,35 @@ paths:
       summary: Uploads a graph using a upsert strategy.
       tags:
       - graph
+  /api/v1/graph/nodes/{id}:
+    get:
+      description: Returns a graph from a node.
+      parameters:
+      - description: Node id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: how many levels deep to return
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Payload used for drawing graphs.
+          schema:
+            $ref: '#/definitions/models.Graph'
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+      summary: Returns a graph from a node.
+      tags:
+      - graph
   /api/v1/nodes:
     get:
       description: Search and return nodes

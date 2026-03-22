@@ -223,6 +223,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/graph/nodes/{id}": {
+            "get": {
+                "description": "Returns a graph from a node.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "graph"
+                ],
+                "summary": "Returns a graph from a node.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Node id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "how many levels deep to return",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payload used for drawing graphs.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Graph"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
         "/api/v1/nodes": {
             "get": {
                 "description": "Search and return nodes",
