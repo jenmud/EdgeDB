@@ -297,6 +297,40 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	return nodes, nil
 }
 
+// Node returns the node with the provided ID.
+func (s *Store) Node(ctx context.Context, id uint64) (models.Node, error) {
+	query := `
+		SELECT n.id, n.created_at, n.updated_at, n.label, n.properties
+		FROM items n
+		WHERE n.id = ? AND n.from_id = 0 AND n.to_id = 0
+	`
+
+	row := s.db.QueryRowContext(ctx, query, id)
+
+	if row.Err() != nil {
+		return models.Node{}, row.Err()
+	}
+
+	n := models.Node{}
+
+	var createdAt int64
+	var updatedAt int64
+
+	var props []byte
+	if err := row.Scan(&n.ID, &createdAt, &updatedAt, &n.Label, &props); err != nil {
+		return models.Node{}, err
+	}
+
+	if err := n.Properties.FromBytes(props); err != nil {
+		return models.Node{}, err
+	}
+
+	n.CreatedAt = time.Unix(createdAt, 0)
+	n.UpdatedAt = time.Unix(updatedAt, 0)
+
+	return n, nil
+}
+
 // Nodes applies the search for all nodes in the store.
 func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node, error) {
 	if args.Limit == 0 {
@@ -472,6 +506,40 @@ func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	}
 
 	return edges, nil
+}
+
+// Edge returns the edge with the provided ID.
+func (s *Store) Edge(ctx context.Context, id uint64) (models.Edge, error) {
+	query := `
+		SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.properties
+		FROM items e
+		WHERE e.id = ? AND e.from_id > 0 AND e.to_id > 0
+	`
+
+	row := s.db.QueryRowContext(ctx, query, id)
+
+	if row.Err() != nil {
+		return models.Edge{}, row.Err()
+	}
+
+	e := models.Edge{}
+
+	var createdAt int64
+	var updatedAt int64
+
+	var props []byte
+	if err := row.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &props); err != nil {
+		return models.Edge{}, err
+	}
+
+	if err := e.Properties.FromBytes(props); err != nil {
+		return models.Edge{}, err
+	}
+
+	e.CreatedAt = time.Unix(createdAt, 0)
+	e.UpdatedAt = time.Unix(updatedAt, 0)
+
+	return e, nil
 }
 
 // Edges applies the search for all edges in the store.

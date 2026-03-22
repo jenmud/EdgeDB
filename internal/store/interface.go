@@ -49,6 +49,7 @@ type NodeSearcher interface {
 type NodeStore interface {
 	NodeWriter
 	NodeSearcher
+	Node(context.Context, uint64) (models.Node, error)
 	Close() error
 }
 
@@ -77,6 +78,7 @@ type EdgeSearcher interface {
 type EdgeStore interface {
 	EdgeWriter
 	EdgeSearcher
+	Edge(context.Context, uint64) (models.Edge, error)
 	Close() error
 }
 
