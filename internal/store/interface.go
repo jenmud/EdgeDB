@@ -82,10 +82,19 @@ type EdgeStore interface {
 	Close() error
 }
 
+// SubGraphArgs are the arguments for building a sub graph.
+type SubGraphArgs struct {
+	FromNodeID uint64
+	ToNodeID   uint64
+	EdgeID     uint64
+	Limit      int // limit is how many level deep to fetch
+}
+
 // Store defines the behavior required to persist and search a store.
 type Store interface {
 	NodeStore
 	EdgeStore
 	Graph(context.Context, TermSearchArgs) (models.Graph, error)
+	SubGraph(context.Context, SubGraphArgs) (models.Graph, error)
 	Close() error
 }

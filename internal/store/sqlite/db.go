@@ -757,8 +757,7 @@ func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Gr
 		switch itemType {
 
 		case "node":
-			graph.Nodes = append(
-				graph.Nodes,
+			graph.AddNodes(
 				models.Node{
 					ID:         id,
 					CreatedAt:  time.Unix(createdAt, 0),
@@ -770,8 +769,7 @@ func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Gr
 			)
 
 		case "edge":
-			graph.Edges = append(
-				graph.Edges,
+			graph.AddEdges(
 				models.Edge{
 					ID:         id,
 					CreatedAt:  time.Unix(createdAt, 0),
@@ -798,6 +796,109 @@ func (s *Store) Graph(ctx context.Context, args store.TermSearchArgs) (models.Gr
 		return graph, err
 	}
 
-	graph.Nodes = append(graph.Nodes, missingNodesFetched...)
+	graph.AddNodes(missingNodesFetched...)
+	return graph, nil
+}
+
+// edgesByNodeID is a helper used to retrieve all edges with the given node IDs.
+func edgesByNodeID(ctx context.Context, db *sql.DB, ids ...uint64) ([]models.Edge, error) {
+	edges := make([]models.Edge, 0, len(ids))
+
+	/*
+		You need this ugly syntax because you need to build a query string with all the ID's
+		Which means that you need a `?` for every ID.
+	*/
+	placeholders := make([]string, len(ids))
+	args := make([]any, len(ids))
+
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	/*
+		Build the query string filling all the placeholder with `?` for every ID.
+	*/
+	query := fmt.Sprintf(
+		`
+			SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.properties
+			FROM items e
+			WHERE e.from_id IN (%s) OR e.to_id IN (%s);
+		`,
+		strings.Join(placeholders, ","),
+		strings.Join(placeholders, ","),
+	)
+
+	rows, err := db.QueryContext(ctx, query, append(args, args...)...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		e := models.Edge{}
+
+		var createdAt int64
+		var updatedAt int64
+
+		var props []byte
+		if err := rows.Scan(&e.ID, &createdAt, &updatedAt, &e.From, &e.Label, &e.To, &props); err != nil {
+			return edges, err
+		}
+
+		if err := e.Properties.FromBytes(props); err != nil {
+			return edges, err
+		}
+
+		e.CreatedAt = time.Unix(createdAt, 0)
+		e.UpdatedAt = time.Unix(updatedAt, 0)
+
+		edges = append(edges, e)
+	}
+
+	return edges, nil
+}
+
+// SubGraph returns a new sub-graph a starting point.
+func (s *Store) SubGraph(ctx context.Context, args store.SubGraphArgs) (models.Graph, error) {
+	graph := models.Graph{
+		Nodes: make([]models.Node, 0),
+		Edges: make([]models.Edge, 0),
+	}
+
+	// if we do not have node ID's then we skip this step
+	if args.FromNodeID > 0 || args.ToNodeID > 0 {
+		nodes, err := nodesByID(ctx, s.db, args.FromNodeID, args.EdgeID)
+		if err != nil {
+			return models.Graph{}, err
+		}
+
+		graph.AddNodes(nodes...)
+
+		edges, err := edgesByNodeID(ctx, s.db, args.FromNodeID, args.ToNodeID)
+		if err != nil {
+			return models.Graph{}, err
+		}
+
+		graph.AddEdges(edges...)
+	}
+
+	// if we have a edge ID, then fetch it from the db
+	if args.EdgeID > 0 {
+		edge, err := s.Edge(ctx, args.EdgeID)
+		if err != nil {
+			return models.Graph{}, err
+		}
+
+		graph.AddEdges(edge)
+	}
+
+	// check for missing nodes and if any missing nodes found, fetch the missing.
+	missing := missingNodes(graph)
+	missingNodesFetched, err := nodesByID(ctx, s.db, missing...)
+	if err != nil {
+		return graph, err
+	}
+
+	graph.AddNodes(missingNodesFetched...)
 	return graph, nil
 }
