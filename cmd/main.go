@@ -118,6 +118,7 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 
 	web.Graph(mux, s)
 	web.GraphSearch(mux, s)
+	web.SubGraph(mux, s)
 
 	// api routes
 	api.GETGraph(mux, s)
@@ -129,14 +130,14 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	api.GETSubGraphByNode(mux, s)
 
 	// catch all
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			return
-		}
+	// mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	if r.Method != http.MethodGet {
+	// 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	// 		return
+	// 	}
 
-		http.Redirect(w, r, "/ui/v1", http.StatusMovedPermanently)
-	})
+	// 	http.Redirect(w, r, "/ui/v1", http.StatusMovedPermanently)
+	// })
 
 	return corsMiddleware(mux)
 }

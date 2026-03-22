@@ -19,13 +19,22 @@ import (
 func StaticAssets(mux *http.ServeMux) {
 	slog.Info("registered route", slog.String("route", "GET /static"))
 
+	// Access the embedded static files (using fs.Sub to get the "static" subfolder)
 	sub, err := fs.Sub(Static, "static")
 	if err != nil {
 		panic(err)
 	}
 
+	// Create a file server to serve files from the "static" subdirectory
 	fileServer := http.FileServer(http.FS(sub))
-	mux.Handle("/ui/v1/static/", http.StripPrefix("/ui/v1/static/", fileServer))
+
+	// Handler for static assets with cache control headers
+	mux.Handle("/static/", http.StripPrefix("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set caching headers for static assets
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable") // Cache for 1 year
+		fileServer.ServeHTTP(w, r)                                             // Serve the static file
+	})))
+
 }
 
 func Index(mux *http.ServeMux, s store.Store) {
@@ -106,6 +115,15 @@ func TableSearch(mux *http.ServeMux, s store.Store) {
 		}
 
 		component := components.GraphTable(graph)
+		component.Render(ctx, w)
+	})
+}
+
+func SubGraph(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/nodes/{id}"))
+	mux.HandleFunc("GET /ui/v1/graph/nodes/{id}", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		component := pages.GraphPage("/api/v1/graph/nodes/" + r.PathValue("id"))
 		component.Render(ctx, w)
 	})
 }
