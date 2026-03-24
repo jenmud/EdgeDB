@@ -41,6 +41,7 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] Add in pagination
 - [ ] Add nats for realtime events
 - [ ] Add SSE support
+- [ ] Add a health route
 
 ## Done
 
