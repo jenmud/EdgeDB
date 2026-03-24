@@ -39,6 +39,8 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] UI to add and delete nodes and edges
 - [ ] Implement some sort of query language
 - [ ] Add in pagination
+- [ ] Add nats for realtime events
+- [ ] Add SSE support
 
 ## Done
 
