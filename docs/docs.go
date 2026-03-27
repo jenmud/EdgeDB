@@ -373,6 +373,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/healthz": {
+            "get": {
+                "description": "Returns returns the health status.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Returns returns the health status.",
+                "responses": {
+                    "200": {
+                        "description": "Current health status",
+                        "schema": {
+                            "$ref": "#/definitions/models.Health"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
         "/static": {
             "get": {
                 "description": "Static serves up static files",
@@ -451,6 +474,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.Node"
                     }
+                }
+            }
+        },
+        "models.Health": {
+            "type": "object",
+            "properties": {
+                "checks": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },

@@ -96,5 +96,6 @@ type Store interface {
 	EdgeStore
 	Graph(context.Context, TermSearchArgs) (models.Graph, error)
 	SubGraph(context.Context, SubGraphArgs) (models.Graph, error)
+	Health(context.Context) models.Health
 	Close() error
 }

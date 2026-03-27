@@ -128,6 +128,7 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	api.PUTEdges(mux, s)
 	api.PUTGraph(mux, s)
 	api.GETSubGraphByNode(mux, s)
+	api.HealthStatus(mux, s)
 
 	// catch all
 	// mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

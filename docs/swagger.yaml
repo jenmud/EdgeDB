@@ -47,6 +47,15 @@ definitions:
           $ref: '#/definitions/models.Node'
         type: array
     type: object
+  models.Health:
+    properties:
+      checks:
+        additionalProperties:
+          type: string
+        type: object
+      status:
+        type: string
+    type: object
   models.Node:
     properties:
       created_at:
@@ -317,6 +326,21 @@ paths:
       summary: Add/update one or more nodes.
       tags:
       - nodes
+  /healthz:
+    get:
+      description: Returns returns the health status.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Current health status
+          schema:
+            $ref: '#/definitions/models.Health'
+        "500":
+          description: Internal server error
+      summary: Returns returns the health status.
+      tags:
+      - Health
   /static:
     get:
       description: Static serves up static files

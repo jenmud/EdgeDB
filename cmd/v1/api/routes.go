@@ -371,3 +371,26 @@ func GETSubGraphByNode(mux *http.ServeMux, s store.Store) {
 		}
 	})
 }
+
+// HealthStatus returns returns the health status.
+// @Summary Returns returns the health status.
+// @Description Returns returns the health status.
+// @Tags Health
+// @Produce json
+// @Success 200 {object} models.Health "Current health status"
+// @Failure 500 "Internal server error"
+// @Router /healthz [get]
+func HealthStatus(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /healthz"))
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(s.Health(ctx)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+}

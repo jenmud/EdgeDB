@@ -902,3 +902,21 @@ func (s *Store) SubGraph(ctx context.Context, args store.SubGraphArgs) (models.G
 	graph.AddNodes(missingNodesFetched...)
 	return graph, nil
 }
+
+// Health will test the DB connection.
+func (s *Store) Health(ctx context.Context) models.Health {
+	err := s.db.PingContext(ctx)
+
+	status := models.Health{}
+
+	switch err {
+	case nil:
+		status.Status = "ok"
+		status.Checks = map[string]string{"ping": "ok"}
+	default:
+		status.Status = "degraded"
+		status.Checks = map[string]string{"ping": fmt.Errorf("error sending ping: %w", err).Error()}
+	}
+
+	return status
+}
