@@ -41,7 +41,6 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [ ] Add in pagination
 - [ ] Add nats for realtime events
 - [ ] Add SSE support
-- [ ] Add a health route
 
 ## Done
 
@@ -55,3 +54,4 @@ Once running, navigate to http://localhost:8080/v1/ui
 - [x] There is no advantage to having two separate tables for nodes and edges. The data is too similar. Instead have a type column and also make the FTS figure out the type.
 - [x] I don't like how I am now passing the data to the graph UI. Think of something better. (works for now)
 - [x] When fetching edges, nodes that are not already in the nodes list should be added. This could be an expensive operation so I may need to think of a nice way to do this whilst being performant.
+- [x] Add a health route
