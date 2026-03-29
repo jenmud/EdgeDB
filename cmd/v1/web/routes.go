@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
@@ -123,7 +124,21 @@ func SubGraph(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/nodes/{id}"))
 	mux.HandleFunc("GET /ui/v1/graph/nodes/{id}", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		component := pages.GraphPage("/api/v1/graph/nodes/" + r.PathValue("id"))
+
+		id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		n, err := s.Node(ctx, id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// component := pages.GraphPage("/api/v1/graph/nodes/" + r.PathValue("id"))
+		component := pages.NodeDetailPage(n)
 		component.Render(ctx, w)
 	})
 }

@@ -1,0 +1,29 @@
+package pages
+
+import (
+  "fmt"
+  "github.com/jenmud/edgedb/models"
+	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
+	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
+)
+
+// NodeDetailPage returns a node detail page for the given node in a graph.
+templ NodeDetailPage(n models.Node) {
+  <div id="node-detail" class="relative w-full h-screen">
+    @layout.Base("EdgeDB") {
+
+      <!-- Node Detail Section (fixed position, always on top) -->
+      <div class="absolute w-full lg:w-1/3 p-4 z-10">
+        @components.Node(n)
+      </div>
+
+      <!-- Graph Section (full-screen, background) -->
+      <div class="absolute inset-0 flex flex-col lg:flex-row">
+        <div class="flex-grow w-full h-full overflow-hidden">
+          @components.GraphContent(fmt.Sprintf("/api/v1/graph/nodes/%d", n.ID))
+        </div>
+      </div>
+
+    }
+  </div>
+}

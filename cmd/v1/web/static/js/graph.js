@@ -39,7 +39,8 @@ function FetchGraph(target, graphURL) {
                 ctx.fillStyle = "white";
 
                 ctx.fillText(node.id, node.x, node.y);
-            });
+            })
+            .zoomSpeed(1.5);  // Set the zoom speed for user interaction
 
             Graph.d3Force('center', null);
             Graph.onEngineStop(() => Graph.zoomToFit(400)); // fit to canvas when engine stops
