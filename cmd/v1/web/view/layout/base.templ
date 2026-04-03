@@ -4,23 +4,23 @@ import (
 	"github.com/jenmud/edgedb/cmd/v1/web/view/partials"
 )
 
-templ Base(title string) {
+templ Base() {
 	<!DOCTYPE html>
 	<html lang="en" class="h-screen" data-theme="dracula">
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width,initial-scale=1"/>
-			<title>{ title }</title>
+			<title>EdgeDB</title>
 
 			<link href="/static/css/daisyui@5.css" rel="stylesheet" type="text/css"/>
 			<script src="/static/js/tailwindcss@4.js"></script>
 
 			<link href="/static/css/themes.css" rel="stylesheet" type="text/css"/>
 
-    		<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    		<script src="https://unpkg.com/force-graph"></script>
 			<script type="module" src="/static/js/datastar.js"></script>
-			<script src="/static/js/graph.js"></script>
+    	<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    	<script src="https://unpkg.com/force-graph"></script>
+			<script type="module" src="/static/js/graph.js"></script>
 		</head>
 
 		<body class="min-h-screen">

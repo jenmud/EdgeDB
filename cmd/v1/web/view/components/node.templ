@@ -5,35 +5,8 @@ import (
   "github.com/jenmud/edgedb/models"
 )
 
-templ RenderValue(value any) {
-	switch v := value.(type) {
 
-	case map[string]any:
-		<div class="ml-4 border-l pl-4">
-			for key, val := range v {
-				<div class="mb-2">
-					<span class="font-mono text-sm text-primary">{ key }</span>
-					<div>
-						@RenderValue(val)
-					</div>
-				</div>
-			}
-		</div>
-
-	case []any:
-		<ul class="list-disc ml-6">
-			for _, item := range v {
-				<li>
-					@RenderValue(item)
-				</li>
-			}
-		</ul>
-
-	default:
-		<span class="text-sm">{ fmt.Sprintf("%v", v) }</span>
-	}
-}
-
+// Node represents a node in a graph.
 templ Node(n models.Node) {
 	<div id={ fmt.Sprintf("node-%d", n.ID) } class="card bg-slate-700 shadow-xl border border-base-300">
 		<div class="card-body">
@@ -55,7 +28,7 @@ templ Node(n models.Node) {
 								{ key }
 							</div>
 							<div>
-								@RenderValue(value)
+								@renderValue(value)
 							</div>
 						</div>
 					}
@@ -65,4 +38,35 @@ templ Node(n models.Node) {
 			}
 		</div>
 	</div>
+}
+
+
+// renderValue is a components that will recursivly render a value like a map. 
+templ renderValue(value any) {
+	switch v := value.(type) {
+
+	case map[string]any:
+		<div class="ml-4 border-l pl-4">
+			for key, val := range v {
+				<div class="mb-2">
+					<span class="font-mono text-sm text-primary">{ key }</span>
+					<div>
+						@renderValue(val)
+					</div>
+				</div>
+			}
+		</div>
+
+	case []any:
+		<ul class="list-disc ml-6">
+			for _, item := range v {
+				<li>
+					@renderValue(item)
+				</li>
+			}
+		</ul>
+
+	default:
+		<span class="text-sm">{ fmt.Sprintf("%v", v) }</span>
+	}
 }

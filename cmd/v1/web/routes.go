@@ -7,10 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
-	"github.com/starfederation/datastar-go/datastar"
 )
 
 // Static serves up static files
@@ -38,6 +36,7 @@ func StaticAssets(mux *http.ServeMux) {
 
 }
 
+// Index is the main landing page.
 func Index(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1"))
 	mux.HandleFunc("GET /ui/v1", func(w http.ResponseWriter, r *http.Request) {
@@ -56,94 +55,6 @@ func Index(mux *http.ServeMux, s store.Store) {
 	})
 }
 
-func Graph(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph"))
-	mux.HandleFunc("GET /ui/v1/graph", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		component := pages.GraphPage("/api/v1/graph")
-		component.Render(ctx, w)
-	})
-}
-
-func GraphSearch(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/graph"))
-	mux.HandleFunc("GET /ui/v1/search/graph", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		type Store struct {
-			Limit int    `json:"limit"`
-			Term  string `json:"term"`
-		}
-
-		queryStore := Store{}
-
-		if err := datastar.ReadSignals(r, &queryStore); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		component := components.GraphContent(fmt.Sprintf("/api/v1/graph?term=%s&limit=%d", queryStore.Term, queryStore.Limit))
-		component.Render(ctx, w)
-	})
-}
-
-func GraphTable(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/table"))
-	mux.HandleFunc("GET /ui/v1/table", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		type Store struct {
-			Limit int    `json:"limit"`
-			Term  string `json:"term"`
-		}
-
-		queryStore := Store{}
-
-		if err := datastar.ReadSignals(r, &queryStore); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		graph, err := s.Graph(ctx, store.TermSearchArgs{Term: queryStore.Term, Limit: queryStore.Limit})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		graphAPIUrl := fmt.Sprintf("/api/v1/graph?term=%s&limit=%d", queryStore.Term, queryStore.Limit)
-		component := pages.GraphTablePage(graphAPIUrl, graph)
-		component.Render(ctx, w)
-	})
-}
-
-func TableSearch(mux *http.ServeMux, s store.Store) {
-	slog.Info("registered route", slog.String("route", "GET /ui/v1/search/table"))
-	mux.HandleFunc("GET /ui/v1/search/table", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		type Store struct {
-			Limit int    `json:"limit"`
-			Term  string `json:"term"`
-		}
-
-		queryStore := Store{}
-
-		if err := datastar.ReadSignals(r, &queryStore); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		graph, err := s.Graph(ctx, store.TermSearchArgs{Term: queryStore.Term, Limit: queryStore.Limit})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		component := components.GraphTable(graph)
-		component.Render(ctx, w)
-	})
-}
-
 func SubGraph(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/nodes/{id}"))
 	mux.HandleFunc("GET /ui/v1/graph/nodes/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -155,13 +66,13 @@ func SubGraph(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
+		// FIXME: there should be a call to query for a Node which will return a SubGraph
 		n, err := s.Node(ctx, id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// component := pages.GraphPage("/api/v1/graph/nodes/" + r.PathValue("id"))
 		component := pages.NodeDetailPage(n)
 		component.Render(ctx, w)
 	})

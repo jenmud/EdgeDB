@@ -1,80 +1,20 @@
 package components
 
 import (
-    "fmt"
-    "log/slog"
-    "encoding/json"
 	"github.com/jenmud/edgedb/models"
 )
 
 
-func asJSON(v any) string {
-    s, err := json.Marshal(v)
-    if err != nil {
-        slog.Error("error marshaling to JSON", slog.String("reason", err.Error()))
-        return "{}"
-    }
-    return string(s)
-}
-
-templ GraphContainer(graphURL string) {
-   <div id="graph-container" data-init={ fmt.Sprintf(`FetchGraph("graph-container", "%s")`, graphURL) }></div>
-}
-
-
-templ Graph(graphURL string) {
-    <div data-signals="{term: '', limit: 1000}">
-        @GraphContainer(graphURL)
+// Graph represents a graph.
+templ Graph(data models.Graph) {
+    <div id="graph">
+        @GraphContainer(data)
     </div>
 }
 
 
-templ GraphContent(graphURL string) {
-    <div id="graph-content">
-        @Graph(graphURL)
-    </div>
+// GraphContainer represents the container where the graph is added.
+templ GraphContainer(data models.Graph) {
+   <div id="graph-container"></div>
 }
 
-
-templ GraphTable(g models.Graph) {
-    <div id="graph-table">
-        @Table(){
-            <thead class="sticky top-0 bg-base-100 z-20">
-                <tr class="bg-slate-700">
-                    <th></th>
-                    <th>From</th>
-                    <th>Label</th>
-                    <th>To</th>
-                    <th>Properties</th>
-                    <th>Weight</th>
-                    <th>Snippet</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                for _, node := range g.Nodes {
-                    <tr class="hover:bg-sky-800">
-                        <td>{ node.ID }</td>
-                        <td></td>
-                        <td>{ node.Label }</td>
-                        <td></td>
-                        <td>{ asJSON(node.Properties) }</td>
-                        <td></td>
-                        <td>@templ.Raw(node.Snippet)</td>
-                    </tr>
-                }
-                for _, edge := range g.Edges {
-                    <tr class="hover:bg-sky-800">
-                        <td>{ edge.ID }</td>
-                        <td>{ edge.From }</td>
-                        <td>{ edge.Label }</td>
-                        <td>{ edge.To }</td>
-                        <td>{ asJSON(edge.Properties) }</td>
-                        <td>{ asJSON(edge.Weight) }</td>
-                        <td>@templ.Raw(edge.Snippet)</td>
-                    </tr>
-                }
-            </tbody>
-        }
-    </div>
-}
