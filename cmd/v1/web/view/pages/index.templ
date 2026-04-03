@@ -1,0 +1,12 @@
+package pages
+
+import (
+	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
+)
+
+// Index returns the index page.
+templ Index() {
+  <div id="node-detail" class="relative w-full h-screen">
+    @layout.Base("EdgeDB")
+  </div>
+}

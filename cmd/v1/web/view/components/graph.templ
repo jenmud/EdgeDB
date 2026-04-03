@@ -30,8 +30,8 @@ templ GraphContent(graphURL string) {
 templ GraphTable(g models.Graph) {
     <div id="graph-table">
         @Table(){
-            <thead>
-                <tr>
+            <thead class="sticky top-0 bg-base-100 z-20">
+                <tr class="bg-slate-700">
                     <th></th>
                     <th>From</th>
                     <th>Label</th>
@@ -44,7 +44,7 @@ templ GraphTable(g models.Graph) {
 
             <tbody>
                 for _, node := range g.Nodes {
-                    <tr class="hover:bg-base-300">
+                    <tr class="hover:bg-sky-800">
                         <td>{ node.ID }</td>
                         <td></td>
                         <td>{ node.Label }</td>
@@ -55,7 +55,7 @@ templ GraphTable(g models.Graph) {
                     </tr>
                 }
                 for _, edge := range g.Edges {
-                    <tr class="hover:bg-base-300">
+                    <tr class="hover:bg-sky-800">
                         <td>{ edge.ID }</td>
                         <td>{ edge.From }</td>
                         <td>{ edge.Label }</td>

@@ -131,14 +131,14 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	api.HealthStatus(mux, s)
 
 	// catch all
-	// mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	if r.Method != http.MethodGet {
-	// 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-	// 		return
-	// 	}
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
 
-	// 	http.Redirect(w, r, "/ui/v1", http.StatusMovedPermanently)
-	// })
+		http.Redirect(w, r, "/ui/v1", http.StatusMovedPermanently)
+	})
 
 	return corsMiddleware(mux)
 }

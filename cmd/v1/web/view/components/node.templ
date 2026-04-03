@@ -35,7 +35,7 @@ templ RenderValue(value any) {
 }
 
 templ Node(n models.Node) {
-	<div id={ fmt.Sprintf("node-%d", n.ID) } class="card bg-base-100 shadow-xl border border-base-300">
+	<div id={ fmt.Sprintf("node-%d", n.ID) } class="card bg-slate-700 shadow-xl border border-base-300">
 		<div class="card-body">
 			<h2 class="card-title text-primary">
 				Node #{ n.ID }
