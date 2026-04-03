@@ -8,6 +8,15 @@ import (
 )
 
 
+func asJSON(v any) string {
+    s, err := json.Marshal(v)
+    if err != nil {
+        slog.Error("error marshaling to JSON", slog.String("reason", err.Error()))
+        return "{}"
+    }
+    return string(s)
+}
+
 templ GraphContainer(graphURL string) {
    <div id="graph-container" data-init={ fmt.Sprintf(`FetchGraph("graph-container", "%s")`, graphURL) }></div>
 }
@@ -68,14 +77,4 @@ templ GraphTable(g models.Graph) {
             </tbody>
         }
     </div>
-}
-
-
-func asJSON(v any) string {
-    s, err := json.Marshal(v)
-    if err != nil {
-        slog.Error("error marshaling to JSON", slog.String("reason", err.Error()))
-        return "{}"
-    }
-    return string(s)
 }

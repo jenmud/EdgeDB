@@ -1,9 +1,22 @@
+// FetchGraph will fetch graph data from the given URL and return a populated Graph.
 function FetchGraph(target, graphURL) {
     fetch(graphURL).then(res => res.json()).then(data => {
         // lets add some particle speeds to the edges
         data.edges.forEach((i) => {
             i.value = 1;
         });
+
+        FillGraph(target, data);
+    })
+}
+
+// FillGraph takes graph data and returns the populated Graph.
+function FillGraph(target, data) {
+
+        // lets add some particle speeds to the edges
+        data.edges.forEach((i) => {
+            i.value = 1;
+        };
 
         const Graph = new ForceGraph(document.getElementById(target))
             .graphData({
