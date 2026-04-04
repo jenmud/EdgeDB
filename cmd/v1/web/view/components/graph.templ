@@ -9,7 +9,14 @@ templ Graph(data models.Graph) {
 	</div>
 }
 
-// GraphContainer represents the container where the graph is added.
 templ GraphContainer(data models.Graph) {
-	<div id="graph-container"></div>
+	<div
+		id="graph-container"
+		data-graph={ templ.JSONString(data) }
+	></div>
+	<script>
+    const el = document.getElementById('graph-container');
+    const data = JSON.parse(el.getAttribute('data-graph'));
+    FillGraph('graph-container', data);
+  </script>
 }
