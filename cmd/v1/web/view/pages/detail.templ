@@ -7,18 +7,21 @@ import (
 )
 
 // NodeDetailPage returns a node detail page for the given node in a graph.
-templ NodeDetailPage(n models.Node) {
+templ NodeDetailPage(graph models.Graph) {
 	<div id="node-detail" class="relative w-full h-screen">
 		@layout.Base() {
 			<!-- Node Detail Section (fixed position, always on top) -->
 			<div class="absolute w-full lg:w-1/3 p-4 z-10">
-				@components.Node(n)
+        for _, n := range graph.Nodes {
+          <div class="pb-2">
+				    @components.Node(n)
+          </div>
+        }
 			</div>
 			<!-- Graph Section (full-screen, background) -->
 			<div class="absolute inset-0 flex flex-col lg:flex-row">
 				<div class="flex-grow w-full h-full overflow-hidden">
-					<!-- FIXME: need to fill the graph here with data -->
-					@components.Graph(models.Graph{Nodes: []models.Node{n}, Edges: []models.Edge{}})
+					@components.Graph(graph)
 				</div>
 			</div>
 		}

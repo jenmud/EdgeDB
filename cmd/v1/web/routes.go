@@ -66,14 +66,13 @@ func SubGraph(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		// FIXME: there should be a call to query for a Node which will return a SubGraph
-		n, err := s.Node(ctx, id)
+		graph, err := s.SubGraph(ctx, store.SubGraphArgs{FromNodeID: id})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		component := pages.NodeDetailPage(n)
+		component := pages.NodeDetailPage(graph)
 		component.Render(ctx, w)
 	})
 }
