@@ -1,20 +1,15 @@
 package components
 
-import (
-	"github.com/jenmud/edgedb/models"
-)
-
+import "github.com/jenmud/edgedb/models"
 
 // Graph represents a graph.
 templ Graph(data models.Graph) {
-    <div id="graph">
-        @GraphContainer(data)
-    </div>
+	<div id="graph">
+		@GraphContainer(data)
+	</div>
 }
-
 
 // GraphContainer represents the container where the graph is added.
 templ GraphContainer(data models.Graph) {
-   <div id="graph-container"></div>
+	<div id="graph-container"></div>
 }
-

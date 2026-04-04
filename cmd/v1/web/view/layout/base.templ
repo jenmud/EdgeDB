@@ -1,8 +1,6 @@
 package layout
 
-import (
-	"github.com/jenmud/edgedb/cmd/v1/web/view/partials"
-)
+import "github.com/jenmud/edgedb/cmd/v1/web/view/partials"
 
 templ Base() {
 	<!DOCTYPE html>
@@ -11,18 +9,14 @@ templ Base() {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width,initial-scale=1"/>
 			<title>EdgeDB</title>
-
 			<link href="/static/css/daisyui@5.css" rel="stylesheet" type="text/css"/>
 			<script src="/static/js/tailwindcss@4.js"></script>
-
 			<link href="/static/css/themes.css" rel="stylesheet" type="text/css"/>
-
 			<script type="module" src="/static/js/datastar.js"></script>
-    	<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    	<script src="https://unpkg.com/force-graph"></script>
-			<script type="module" src="/static/js/graph.js"></script>
+			<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+			<script src="https://unpkg.com/force-graph"></script>
+			<script src="/static/js/graph.js"></script>
 		</head>
-
 		<body class="min-h-screen">
 			<main>
 				<div class="sticky fixed top-0 left-0 w-full z-50">
@@ -30,7 +24,7 @@ templ Base() {
 				</div>
 				<div class="m-6">
 					{ children... }
-				</div>	
+				</div>
 			</main>
 		</body>
 	</html>
