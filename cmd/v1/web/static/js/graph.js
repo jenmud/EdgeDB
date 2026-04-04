@@ -1,9 +1,10 @@
-// FetchGraph will fetch graph data from the given URL and return a populated Graph.
-function FetchGraph(target, graphURL) {
-    fetch(graphURL).then(res => res.json()).then(data => {
-        FillGraph(target, data);
-    })
+// FetchGraph will fetch graph data from the given URL.
+async function FetchGraph(graphURL) {
+    const res = await fetch(graphURL);
+    const data = await res.json();
+    return data;
 }
+
 
 // FillGraph takes graph data and returns the populated Graph.
 function FillGraph(target, data) {
@@ -47,6 +48,20 @@ function FillGraph(target, data) {
             ctx.fillStyle = "white";
 
             ctx.fillText(node.id, node.x, node.y);
+        });
+        
+        Graph.onNodeClick(async (node, event) => {
+            const data = await FetchGraph(`http://localhost:7331/api/v1/graph/nodes/${node.id}`);
+            const current = Graph.graphData();
+
+            data.edges.forEach((i) => {
+                i.value = 1;
+            });
+
+            Graph.graphData({
+                nodes: [...current.nodes, ...data.nodes],
+                links: [...current.links, ...data.edges]
+            });
         });
 
         // Graph.d3Force('center', null);
