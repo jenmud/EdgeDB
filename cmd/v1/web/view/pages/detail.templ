@@ -12,14 +12,13 @@ templ NodeDetailPage(n models.Node) {
 		@layout.Base() {
 			<!-- Node Detail Section (fixed position, always on top) -->
 			<div class="absolute w-full lg:w-1/3 p-4 z-10">
-				<button onclick={ templ.JSFuncCall("FillGraph", "graph-container", models.Graph{Nodes: []models.Node{n}, Edges: []models.Edge{}}) }>Fill Graph</button>
 				@components.Node(n)
 			</div>
 			<!-- Graph Section (full-screen, background) -->
 			<div class="absolute inset-0 flex flex-col lg:flex-row">
 				<div class="flex-grow w-full h-full overflow-hidden">
 					<!-- FIXME: need to fill the graph here with data -->
-					@components.Graph(models.Graph{})
+					@components.Graph(models.Graph{Nodes: []models.Node{n}, Edges: []models.Edge{}})
 				</div>
 			</div>
 		}
