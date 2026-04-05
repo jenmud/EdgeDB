@@ -9,22 +9,14 @@ GRAPH_API_URL = "http://localhost:8080/api/v1/graph"
 # Define the URL for downloading the Bible text
 BIBLE_API_URL = "https://bible-api.com/data/kjv"
 
-nodeID = 1
-edgeID = 1
+_id = 1
 
-# nextNodeID returns the next node ID.
-def nextNodeID() -> int:
-    global nodeID
-    n = nodeID
-    nodeID += 1
-    return n
-
-# nextEdgeID returns the next edge ID.
-def nextEdgeID() -> int:
-    global edgeID
-    e = edgeID
-    edgeID += 1
-    return e
+# nextID returns the next ID.
+def nextID() -> int:
+    global _id
+    i = _id
+    _id += 1
+    return i
 
 
 # A dictionary to store the graph structure
@@ -34,15 +26,12 @@ graph = {
 }
 
 # Helper function to add a node to the graph
-def add_node(node_id: int, label: str, properties: dict = {}) -> dict:
-    if not node_id or node_id <= 0:
-        node_id = nextNodeID()
-
+def add_node(label: str, properties: dict = {}) -> dict:
     if properties is None:
         properties = {}
 
     node = {
-        "id": node_id,
+        "id": nextID(),
         "label": label,
         "properties": properties
     }
@@ -56,7 +45,7 @@ def add_edge(from_id: int, label: str, to_id: int, weight: int = 1, properties: 
         properties = {}
 
     edge ={
-        "id": nextEdgeID(),
+        "id": nextID(),
         "from_id": from_id,
         "label": label,
         "to_id": to_id,
@@ -69,7 +58,7 @@ def add_edge(from_id: int, label: str, to_id: int, weight: int = 1, properties: 
 
 
 # add in the root node
-rootNode = add_node(0, "bible", {})
+rootNode = add_node("bible", {})
 
 def fetch_books():
     resp = requests.get(BIBLE_API_URL)
@@ -77,7 +66,6 @@ def fetch_books():
 
     for book in data.get("books", []):
         n = add_node(
-            node_id=0,
             label="book",
             properties={"url": book.get("url", ""), "name": book.get("name", "")},
         )
