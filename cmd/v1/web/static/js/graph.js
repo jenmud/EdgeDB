@@ -58,9 +58,17 @@ function FillGraph(target, data) {
                 i.value = 1;
             });
 
+            // Ensure no duplicate nodes by filtering out nodes that already exist in the graph
+            const existingNodeIds = new Set(current.nodes.map((n) => n.id));
+            const newNodes = data.nodes.filter((n) => !existingNodeIds.has(n.id));
+            
+            // Ensure no duplicate nodes by filtering out nodes that already exist in the graph
+            const existingEdgeIds = new Set(current.links.map((e) => e.id));
+            const newEdges = data.edges.filter((e) => !existingEdgeIds.has(e.id));
+
             Graph.graphData({
-                nodes: [...current.nodes, ...data.nodes],
-                links: [...current.links, ...data.edges]
+                nodes: [...current.nodes, ...newNodes],
+                links: [...current.links, ...newEdges]
             });
         });
 
