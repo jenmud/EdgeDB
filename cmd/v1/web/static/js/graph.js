@@ -20,7 +20,7 @@ function FillGraph(target, data) {
             links: data.edges // pass edges as links
         })
         .nodeId('id')
-        .nodeLabel('snippet')
+        .nodeLabel('label')
         .nodeAutoColorBy('label')
         .cooldownTicks(100)
         //.maxZoom(10)    // closer zoom limit
@@ -31,6 +31,11 @@ function FillGraph(target, data) {
         .linkCurvature('curvature')
         .linkDirectionalParticles("value")
         .linkDirectionalParticleSpeed(d => d.value * 0.001)
+        .linkLabel("label")
+        .onNodeDragEnd(node => {
+              node.fx = node.x;
+              node.fy = node.y;
+        })
         .nodeCanvasObject((node, ctx, globalScale) => {
             const r = 4 + (node.val || 1); // approximate default scaling
 
@@ -48,6 +53,69 @@ function FillGraph(target, data) {
             ctx.fillStyle = "white";
 
             ctx.fillText(node.id, node.x, node.y);
+        })
+        .linkCanvasObjectMode(() => 'after')
+        .linkCanvasObject((link, ctx) => {
+          const MAX_FONT_SIZE = 4;
+          const LABEL_NODE_MARGIN = Graph.nodeRelSize() * 1.5;
+
+          const start = link.source;
+          const end = link.target;
+
+          // ignore unbound links
+          if (typeof start !== 'object' || typeof end !== 'object') return;
+
+          // midpoint
+          const textPos = {
+            x: start.x + (end.x - start.x) / 2,
+            y: start.y + (end.y - start.y) / 2
+          };
+
+          const dx = end.x - start.x;
+          const dy = end.y - start.y;
+
+          const linkLength = Math.sqrt(dx * dx + dy * dy);
+          const maxTextLength = linkLength - LABEL_NODE_MARGIN * 2;
+
+          // angle
+          let textAngle = Math.atan2(dy, dx);
+
+          // keep text upright
+          if (textAngle > Math.PI / 2) textAngle -= Math.PI;
+          if (textAngle < -Math.PI / 2) textAngle += Math.PI;
+
+          const label = `[${link.label ?? ''}]`;
+          if (!label.trim()) return;
+
+          // estimate font size
+          ctx.font = '1px Sans-Serif';
+          const textWidth = ctx.measureText(label).width;
+          const fontSize = Math.min(MAX_FONT_SIZE, maxTextLength / textWidth);
+
+          if (fontSize <= 0) return;
+
+          ctx.font = `${fontSize}px Sans-Serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.save();
+          ctx.translate(textPos.x, textPos.y);
+          ctx.rotate(textAngle);
+
+          // --- CUT OUT THE LINE UNDER THE TEXT ---
+          ctx.globalCompositeOperation = 'destination-out';
+
+          // add a bit of padding so no line peeks through
+          ctx.lineWidth = fontSize * 0.4;
+          ctx.strokeText(label, 0, 0);
+          ctx.fillText(label, 0, 0);
+
+          // --- DRAW TEXT NORMALLY ---
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.fillStyle = 'darkgrey';
+          ctx.fillText(label, 0, 0);
+
+          ctx.restore();
         });
         
         Graph.onNodeClick(async (node, event) => {
