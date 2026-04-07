@@ -9,7 +9,6 @@ import (
 
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
-	"github.com/jenmud/edgedb/models"
 	"github.com/starfederation/datastar-go/datastar"
 )
 
@@ -84,13 +83,32 @@ func FilterGraph(mux *http.ServeMux, s store.Store) {
 	mux.HandleFunc("GET /ui/v1/graph/filter", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		signals := make(map[string]any)
+		type SignalStore struct {
+			Term   string
+			Limit  int
+			Tokens int
+		}
+
+		signals := SignalStore{}
 		if err := datastar.ReadSignals(r, &signals); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		component := pages.FilterPage(models.Graph{})
+		graph, err := s.Graph(ctx, store.TermSearchArgs{
+			Term:          signals.Term,
+			Limit:         signals.Limit,
+			SnippetTokens: signals.Limit,
+			SnippetStart:  `<span class="text-red-500">`,
+			SnippetEnd:    "</span>",
+		})
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := pages.FilterPage(graph)
 		component.Render(ctx, w)
 	})
 }

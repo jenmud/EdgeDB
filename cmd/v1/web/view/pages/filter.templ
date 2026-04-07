@@ -11,7 +11,7 @@ templ FilterPage(graph models.Graph) {
 
     <div class="flex w-full flex-col">
 
-      <div class="flex items-center justify-center py-4">
+			<div class="flex items-center justify-center py-4 sticky fixed top-0 left-0 w-full z-50">
         <input class="input md:w-500" type="text" placeholder="search terms"/>
       </div>
 
@@ -21,14 +21,14 @@ templ FilterPage(graph models.Graph) {
 
         <div class="flex flex-col grow">
           <h3 class="text-center underline py-4">Nodes</h3>
-          @components.Nodes()
+          @components.Nodes(graph.Nodes...)
         </div>
 
         <div class="divider md:divider-horizontal"></div>
 
         <div class="flex flex-col grow">
           <h3 class="text-center underline py-4">Edges</h3>
-          @components.Edges()
+          @components.Edges(graph.Edges...)
         </div>
 
       </div>
