@@ -14,20 +14,51 @@ templ Edges(edges ...models.Edge) {
   </div>
 }
 
-
 templ Edge(e models.Edge) {
 	<div id={ fmt.Sprintf("edge-%d", e.ID) } class="card bg-slate-700 shadow-xl border border-base-300">
 		<div class="card-body">
-			<h2 class="card-title text-primary">
-				Edge #{ e.ID }
-			</h2>
+
+      <!-- Outer Flexbox container to align graphic and Edge ID -->
+      <div class="flex items-center justify-between">
+
+        <!-- Edge ID aligned to the far right -->
+        <h2 class="card-title text-primary ml-auto">
+          Edge #{ e.ID }
+        </h2>
+        
+        <!-- Centered section for graphic (nodes) -->
+        <h5 class="text-primary flex items-center space-x-2 flex-grow justify-center">
+          <a class="cursor-pointer" href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", e.From) }>
+            <span class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full font-bold text-sm overflow-hidden text-ellipsis">
+              { e.From }
+            </span>
+          </a>
+          <span class="text-sm text-gray-500">-</span>
+          <span class="font-medium text-blue-500">[ { e.Label } ]</span>
+          <span class="text-sm text-gray-500">-></span>
+          <a class="cursor-pointer" href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", e.To) }>
+            <span class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full font-bold text-sm overflow-hidden text-ellipsis">
+              { e.To }
+            </span>
+          </a>
+        </h5>
+
+      </div> <!-- End of outer flexbox container -->
 
 			<p class="text-lg font-semibold">
 				{ e.Label }
 			</p>
 
+      if e.Snippet != "" {
+        <div class="divider">Term Snippet</div>
+        <div class="space-y-2">
+          @templ.Raw(e.Snippet)
+        </div>
+      }
+
 			<div class="divider">Properties</div>
 
+			<!-- Properties Section -->
 			if len(e.Properties) > 0 {
 				<div class="space-y-2">
 					for key, value := range e.Properties {

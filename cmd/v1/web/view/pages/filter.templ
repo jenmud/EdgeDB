@@ -11,8 +11,10 @@ templ FilterPage() {
 
     <div class="flex w-full flex-col max-h-screen" data-signals='{term: "", limit: 1000}'>
 
-			<div class="flex items-center justify-center py-4 sticky fixed top-0 left-0 w-full z-50">
-        <input class="input md:w-500" type="text" placeholder="search terms" data-bind:term data-on:input__debounce.300ms="@get('/ui/v1/graph/filter/content')" autofocus/>
+			<div class="flex items-center justify-center py-4 sticky fixed top-0 left-0 w-full z-50 gap-4">
+        <span class="loading loading-ring loading-md" data-show="$fetching"></span>
+        <input class="input md:w-500" type="text" placeholder="search terms" data-bind:term data-on:input__debounce.300ms="@get('/ui/v1/graph/filter/content')" data-indicator:fetching autofocus/>
+        <span class="loading loading-ring loading-md" data-show="$fetching"></span>
       </div>
 
       <div class="divider">MATCHED</div>
