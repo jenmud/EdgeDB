@@ -254,19 +254,22 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	}
 
 	if args.Term == "" {
-		return s.Nodes(ctx, store.NodesArgs{Limit: args.Limit})
+		return s.Nodes(ctx, store.NodesArgs{Limit: args.Limit, LastID: args.LastID})
 	}
 
 	query := `
 	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
 	FROM fts
 	JOIN items n ON n.id = fts.id
-	WHERE fts.type = 'node' AND fts MATCH ?
-	ORDER BY bm25(fts)
+	WHERE
+		fts.type = 'node'
+		AND fts MATCH ?
+		AND n.id > ?
+	ORDER BY bm25(fts), n.id
 	LIMIT ?;
 	`
 
-	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.Limit)
+	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.LastID, args.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -469,19 +472,22 @@ func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	}
 
 	if args.Term == "" {
-		return s.Edges(ctx, store.EdgesArgs{Limit: args.Limit})
+		return s.Edges(ctx, store.EdgesArgs{Limit: args.Limit, LastID: args.LastID})
 	}
 
 	query := `
 	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.weight, e.properties, snippet(fts, -1, ?, ?, ' ... ', ?) as snippet
 	FROM fts
 	JOIN items e ON e.id = fts.id
-	WHERE fts.type = 'edge' AND fts MATCH ?
-	ORDER BY bm25(fts)
+	WHERE
+		fts.type = 'edge'
+		AND fts MATCH ?
+		AND e.id > ?
+	ORDER BY bm25(fts), e.id
 	LIMIT ?;
 	`
 
-	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.Limit)
+	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.LastID, args.Limit)
 	if err != nil {
 		return nil, err
 	}
