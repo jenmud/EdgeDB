@@ -82,6 +82,15 @@ func FilterGraph(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/filter"))
 	mux.HandleFunc("GET /ui/v1/graph/filter", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		component := pages.FilterPage()
+		component.Render(ctx, w)
+	})
+}
+
+func FilterGraphContent(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/filter/content"))
+	mux.HandleFunc("GET /ui/v1/graph/filter/content", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		type SignalStore struct {
 			Term   string
@@ -108,7 +117,7 @@ func FilterGraph(mux *http.ServeMux, s store.Store) {
 			return
 		}
 
-		component := pages.FilterPage(graph)
+		component := pages.FilterPageContent(graph)
 		component.Render(ctx, w)
 	})
 }

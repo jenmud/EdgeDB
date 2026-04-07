@@ -6,33 +6,38 @@ import (
   "github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 )
 
-templ FilterPage(graph models.Graph) {
+templ FilterPage() {
   @layout.Base() {
 
-    <div class="flex w-full flex-col max-h-screen">
+    <div class="flex w-full flex-col max-h-screen" data-signals='{term: "", limit: 1000}'>
 
 			<div class="flex items-center justify-center py-4 sticky fixed top-0 left-0 w-full z-50">
-        <input class="input md:w-500" type="text" placeholder="search terms"/>
+        <input class="input md:w-500" type="text" placeholder="search terms" data-bind:term data-on:input__debounce.300ms="@get('/ui/v1/graph/filter/content')"/>
       </div>
 
       <div class="divider">MATCHED</div>
 
-      <div class="md:flex md:w-full h-full">
-
-        <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
-          <h3 class="text-center underline py-4">Nodes</h3>
-          @components.Nodes(graph.Nodes...)
-        </div>
-
-        <div class="divider md:divider-horizontal"></div>
-
-        <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
-          <h3 class="text-center underline py-4">Edges</h3>
-          @components.Edges(graph.Edges...)
-        </div>
-
-      </div>
+      @FilterPageContent(models.Graph{})
 
     </div>
   }
+}
+
+
+templ FilterPageContent(graph models.Graph) {
+  <div id="filter" class="md:flex md:w-full h-full">
+
+    <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
+      <h3 class="text-center underline py-4">Nodes</h3>
+      @components.Nodes(graph.Nodes...)
+    </div>
+
+    <div class="divider md:divider-horizontal"></div>
+
+    <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
+      <h3 class="text-center underline py-4">Edges</h3>
+      @components.Edges(graph.Edges...)
+    </div>
+
+  </div>
 }

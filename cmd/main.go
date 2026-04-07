@@ -115,6 +115,7 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 	web.Index(mux, s)
 	web.SubGraph(mux, s)
 	web.FilterGraph(mux, s)
+	web.FilterGraphContent(mux, s)
 
 	// api routes
 	api.GETGraph(mux, s)
