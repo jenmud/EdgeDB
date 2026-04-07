@@ -18,34 +18,45 @@ templ Nodes(nodes ...models.Node) {
 // Node represents a node in a graph.
 templ Node(n models.Node) {
 	<div id={ fmt.Sprintf("node-%d", n.ID) } class="card bg-slate-700 shadow-xl border border-base-300">
-		<div class="card-body">
-			<h2 class="card-title text-primary">
-				Node #{ n.ID }
-			</h2>
+    <div class="tooltip tooltip-top" data-tip={ fmt.Sprintf("click to follow node %d", n.ID) }>
+      <a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>
+        <div class="card-body">
+            <h2 class="card-title text-primary cursor-pointer">
+              Node #{ n.ID }
+            </h2>
 
-			<p class="text-lg font-semibold">
-				{ n.Label }
-			</p>
+          <p class="text-lg font-semibold">
+            { n.Label }
+          </p>
+          
+          if n.Snippet != "" {
+            <div class="divider">Term Snippet</div>
+            <div class="space-y-2">
+              @templ.Raw(n.Snippet)
+            </div>
+          }
 
-			<div class="divider">Properties</div>
+          <div class="divider">Properties</div>
 
-			if len(n.Properties) > 0 {
-				<div class="space-y-2">
-					for key, value := range n.Properties {
-						<div class="p-3 bg-base-200 rounded-lg">
-							<div class="font-mono text-sm text-secondary mb-1">
-								{ key }
-							</div>
-							<div>
-								@renderValue(value)
-							</div>
-						</div>
-					}
-				</div>
-			} else {
-				<p class="text-sm opacity-60">No properties available</p>
-			}
-		</div>
+          if len(n.Properties) > 0 {
+            <div class="space-y-2">
+              for key, value := range n.Properties {
+                <div class="p-3 bg-base-200 rounded-lg">
+                  <div class="font-mono text-sm text-secondary mb-1">
+                    { key }
+                  </div>
+                  <div>
+                    @renderValue(value)
+                  </div>
+                </div>
+              }
+            </div>
+          } else {
+            <p class="text-sm opacity-60">No properties available</p>
+          }
+        </div>
+    </a>
+    </div>
 	</div>
 }
 
