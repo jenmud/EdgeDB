@@ -20,6 +20,9 @@ type TermSearchArgs struct {
 	// Limit is the max number of items to return.
 	Limit int
 
+	// LastID is the last know primary key/ID which will be used for fast pagination.
+	LastID uint64
+
 	// SnippetTokens is the max tokens in the returned snipped text.
 	SnippetTokens int
 
@@ -34,6 +37,9 @@ type TermSearchArgs struct {
 type NodesArgs struct {
 	// Limit is the max number of items to return.
 	Limit int
+
+	// LastID is the last know primary key/ID which will be used for fast pagination.
+	LastID uint64
 }
 
 // NodeSearcher defines the behavior required to search for nodes in the store..
@@ -63,6 +69,9 @@ type EdgeWriter interface {
 type EdgesArgs struct {
 	// Limit is the max number of items to return.
 	Limit int
+
+	// LastID is the last know primary key/ID which will be used for fast pagination.
+	LastID uint64
 }
 
 // EdgeSearcher defines the behavior required to search for edges in the store..
@@ -84,10 +93,20 @@ type EdgeStore interface {
 
 // SubGraphArgs are the arguments for building a sub graph.
 type SubGraphArgs struct {
+	// FromNodeID is the node ID to start building the sub graph from.
 	FromNodeID uint64
-	ToNodeID   uint64
-	EdgeID     uint64
-	Limit      int // limit is how many level deep to fetch
+
+	// ToNodeID is the node ID to start building the sub graph from.
+	ToNodeID uint64
+
+	// EdgeID is the edge ID to start building the sub graph from.
+	EdgeID uint64
+
+	// Limit is the max number of items to return.
+	Limit int
+
+	// LastID is the last know primary key/ID which will be used for fast pagination.
+	LastID uint64
 }
 
 // Store defines the behavior required to persist and search a store.
