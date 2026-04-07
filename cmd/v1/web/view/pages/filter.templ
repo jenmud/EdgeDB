@@ -9,7 +9,7 @@ import (
 templ FilterPage(graph models.Graph) {
   @layout.Base() {
 
-    <div class="flex w-full flex-col">
+    <div class="flex w-full flex-col max-h-screen">
 
 			<div class="flex items-center justify-center py-4 sticky fixed top-0 left-0 w-full z-50">
         <input class="input md:w-500" type="text" placeholder="search terms"/>
@@ -17,16 +17,16 @@ templ FilterPage(graph models.Graph) {
 
       <div class="divider">MATCHED</div>
 
-      <div class="md:flex md:w-full">
+      <div class="md:flex md:w-full h-full">
 
-        <div class="flex flex-col grow">
+        <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
           <h3 class="text-center underline py-4">Nodes</h3>
           @components.Nodes(graph.Nodes...)
         </div>
 
         <div class="divider md:divider-horizontal"></div>
 
-        <div class="flex flex-col grow">
+        <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
           <h3 class="text-center underline py-4">Edges</h3>
           @components.Edges(graph.Edges...)
         </div>
