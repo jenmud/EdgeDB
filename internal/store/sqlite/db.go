@@ -487,8 +487,6 @@ func (s *Store) EdgesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 	LIMIT ?;
 	`
 
-	// FIXME: somethind is not working with the pagination!!!!!
-
 	rows, err := s.db.QueryContext(ctx, query, args.SnippetStart, args.SnippetEnd, args.SnippetTokens, args.Term, args.LastID, args.Limit)
 	if err != nil {
 		return nil, err
