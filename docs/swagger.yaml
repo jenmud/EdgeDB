@@ -113,6 +113,11 @@ paths:
         minimum: 1
         name: limit
         type: integer
+      - default: 0
+        description: last known ID from previous result used for pagination
+        in: query
+        name: lastID
+        type: integer
       produces:
       - application/json
       responses:
@@ -284,6 +289,11 @@ paths:
         in: query
         minimum: 1
         name: limit
+        type: integer
+      - default: 0
+        description: last known ID from previous result used for pagination
+        in: query
+        name: lastID
         type: integer
       produces:
       - application/json

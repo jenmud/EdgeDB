@@ -63,6 +63,13 @@ const docTemplate = `{
                         "description": "limit results returned",
                         "name": "limit",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "last known ID from previous result used for pagination",
+                        "name": "lastID",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -313,6 +320,13 @@ const docTemplate = `{
                         "default": 1000,
                         "description": "limit results returned",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "last known ID from previous result used for pagination",
+                        "name": "lastID",
                         "in": "query"
                     }
                 ],

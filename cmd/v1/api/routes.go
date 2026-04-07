@@ -21,6 +21,7 @@ import (
 // @Param snippetEnd query string false "snippet start" default(</span>)
 // @Param tokens query int false "snippet tokens" minimum(1) maximum(64) default(10)
 // @Param limit query int false "limit results returned" minimum(1) default(1000)
+// @Param lastID query int false "last known ID from previous result used for pagination" default(0)
 // @Success 200 {array} models.Node "List of nodes"
 // @Failure 400 "Bad request"
 // @Failure 500 "Internal server error"
@@ -36,6 +37,7 @@ func GETNodes(mux *http.ServeMux, s store.Store) {
 
 		limit := 1000
 		tokens := 10
+		var lastID uint64 = 0
 
 		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
 			limit = l
@@ -45,15 +47,19 @@ func GETNodes(mux *http.ServeMux, s store.Store) {
 			tokens = s
 		}
 
+		if l, err := strconv.ParseUint(r.URL.Query().Get("lastID"), 10, 64); err == nil {
+			lastID = l
+		}
+
 		var (
 			nodes []models.Node
 			err   error
 		)
 
 		if term == "" {
-			nodes, err = s.Nodes(ctx, store.NodesArgs{Limit: limit})
+			nodes, err = s.Nodes(ctx, store.NodesArgs{Limit: limit, LastID: lastID})
 		} else {
-			args := store.TermSearchArgs{Term: term, Limit: limit, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
+			args := store.TermSearchArgs{Term: term, Limit: limit, LastID: lastID, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
 			nodes, err = s.NodesTermSearch(ctx, args)
 		}
 
@@ -127,6 +133,7 @@ func PUTNodes(mux *http.ServeMux, s store.Store) {
 // @Param snippetEnd query string false "snippet start" default(</span>)
 // @Param tokens query int false "snippet tokens" minimum(1) maximum(64) default(10)
 // @Param limit query int false "limit results returned" minimum(1) default(1000)
+// @Param lastID query int false "last known ID from previous result used for pagination" default(0)
 // @Success 200 {array} models.Edge "List of edges"
 // @Failure 400 "Bad request"
 // @Failure 500 "Internal server error"
@@ -142,6 +149,7 @@ func GETEdges(mux *http.ServeMux, s store.Store) {
 
 		limit := 1000
 		tokens := 10
+		var lastID uint64 = 0
 
 		if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
 			limit = l
@@ -151,13 +159,17 @@ func GETEdges(mux *http.ServeMux, s store.Store) {
 			tokens = s
 		}
 
+		if l, err := strconv.ParseUint(r.URL.Query().Get("lastID"), 10, 64); err == nil {
+			lastID = l
+		}
+
 		var (
 			edges []models.Edge
 			err   error
 		)
 
 		if term == "" {
-			edges, err = s.Edges(ctx, store.EdgesArgs{Limit: limit})
+			edges, err = s.Edges(ctx, store.EdgesArgs{Limit: limit, LastID: lastID})
 		} else {
 			args := store.TermSearchArgs{Term: term, Limit: limit, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
 			edges, err = s.EdgesTermSearch(ctx, args)

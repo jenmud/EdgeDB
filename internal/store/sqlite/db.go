@@ -340,11 +340,15 @@ func (s *Store) Nodes(ctx context.Context, args store.NodesArgs) ([]models.Node,
 	query := `
 	SELECT n.id, n.created_at, n.updated_at, n.label, n.properties
 	FROM items n
-	WHERE n.id > 0 AND n.from_id = 0 AND n.to_id = 0
+	WHERE
+		n.from_id = 0 AND n.to_id = 0
+	AND
+		n.id > ?
+	ORDER BY n.id
 	LIMIT ?;
 	`
 
-	rows, err := s.db.QueryContext(ctx, query, args.Limit)
+	rows, err := s.db.QueryContext(ctx, query, args.LastID, args.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -551,11 +555,15 @@ func (s *Store) Edges(ctx context.Context, args store.EdgesArgs) ([]models.Edge,
 	query := `
 	SELECT e.id, e.created_at, e.updated_at, e.from_id, e.label, e.to_id, e.weight, e.properties
 	FROM items e
-	WHERE e.id > 0 AND e.from_id > 0 AND e.to_id > 0
+	WHERE 
+		e.from_id > 0 AND e.to_id > 0
+	AND
+		e.id > ?
+	ORDER BY e.id
 	LIMIT ?;
 	`
 
-	rows, err := s.db.QueryContext(ctx, query, args.Limit)
+	rows, err := s.db.QueryContext(ctx, query, args.LastID, args.Limit)
 	if err != nil {
 		return nil, err
 	}
