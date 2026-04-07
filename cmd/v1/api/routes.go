@@ -171,7 +171,7 @@ func GETEdges(mux *http.ServeMux, s store.Store) {
 		if term == "" {
 			edges, err = s.Edges(ctx, store.EdgesArgs{Limit: limit, LastID: lastID})
 		} else {
-			args := store.TermSearchArgs{Term: term, Limit: limit, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
+			args := store.TermSearchArgs{Term: term, Limit: limit, LastID: lastID, SnippetStart: snippetStart, SnippetEnd: snippetEnd, SnippetTokens: tokens}
 			edges, err = s.EdgesTermSearch(ctx, args)
 		}
 
