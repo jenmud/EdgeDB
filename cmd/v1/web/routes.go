@@ -9,6 +9,8 @@ import (
 
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/models"
+	"github.com/starfederation/datastar-go/datastar"
 )
 
 // Static serves up static files
@@ -73,6 +75,22 @@ func SubGraph(mux *http.ServeMux, s store.Store) {
 		}
 
 		component := pages.NodeDetailPage(graph)
+		component.Render(ctx, w)
+	})
+}
+
+func FilterGraph(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/filter"))
+	mux.HandleFunc("GET /ui/v1/graph/filter", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		signals := make(map[string]any)
+		if err := datastar.ReadSignals(r, &signals); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := pages.FilterPage(models.Graph{})
 		component.Render(ctx, w)
 	})
 }

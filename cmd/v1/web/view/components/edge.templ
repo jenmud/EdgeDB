@@ -1,0 +1,49 @@
+package components
+
+import (
+  "fmt"
+  "github.com/jenmud/edgedb/models"
+)
+
+
+templ Edges(edges ...models.Edge) {
+  <div id="nodes" class="flex flex-col gap-2 w-full">
+    for _, e := range edges {
+      @Edge(e)
+    }
+  </div>
+}
+
+
+templ Edge(e models.Edge) {
+	<div id={ fmt.Sprintf("edge-%d", e.ID) } class="card bg-slate-700 shadow-xl border border-base-300">
+		<div class="card-body">
+			<h2 class="card-title text-primary">
+				Edge #{ e.ID }
+			</h2>
+
+			<p class="text-lg font-semibold">
+				{ e.Label }
+			</p>
+
+			<div class="divider">Properties</div>
+
+			if len(e.Properties) > 0 {
+				<div class="space-y-2">
+					for key, value := range e.Properties {
+						<div class="p-3 bg-base-200 rounded-lg">
+							<div class="font-mono text-sm text-secondary mb-1">
+								{ key }
+							</div>
+							<div>
+								@renderValue(value)
+							</div>
+						</div>
+					}
+				</div>
+			} else {
+				<p class="text-sm opacity-60">No properties available</p>
+			}
+		</div>
+	</div>
+}

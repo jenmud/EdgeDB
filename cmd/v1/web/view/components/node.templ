@@ -6,6 +6,15 @@ import (
 )
 
 
+templ Nodes(nodes ...models.Node) {
+  <div id="nodes" class="flex flex-col gap-2 w-full">
+    for _, n := range nodes {
+      @Node(n)
+    }
+  </div>
+}
+
+
 // Node represents a node in a graph.
 templ Node(n models.Node) {
 	<div id={ fmt.Sprintf("node-%d", n.ID) } class="card bg-slate-700 shadow-xl border border-base-300">
