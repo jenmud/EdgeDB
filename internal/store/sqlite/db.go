@@ -176,6 +176,24 @@ func (s *Store) UpsertNodes(ctx context.Context, n ...models.Node) ([]models.Nod
 
 	defer tx.Rollback()
 
+	query := `
+		INSERT INTO items (id, label, properties)
+		VALUES (?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			id = excluded.id,
+			label = excluded.label,
+			properties = excluded.properties
+		RETURNING id, created_at, updated_at, label, properties;
+	`
+
+	// Prepare the statement once and reuse it for all nodes.
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
 	nodes := make([]models.Node, len(n))
 
 	for i, n := range n {
@@ -199,17 +217,7 @@ func (s *Store) UpsertNodes(ctx context.Context, n ...models.Node) ([]models.Nod
 			id = &n.ID
 		}
 
-		query := `
-			INSERT INTO items (id, label, properties)
-			VALUES (?, ?, ?)
-			ON CONFLICT(id) DO UPDATE SET
-				id = excluded.id,
-				label = excluded.label,
-				properties = excluded.properties
-			RETURNING id, created_at, updated_at, label, properties;
-		`
-
-		row := tx.QueryRowContext(ctx, query, id, n.Label, props)
+		row := stmt.QueryRowContext(ctx, query, id, n.Label, props)
 
 		var createdAt int64
 		var updatedAt int64
@@ -391,6 +399,25 @@ func (s *Store) UpsertEdges(ctx context.Context, e ...models.Edge) ([]models.Edg
 
 	defer tx.Rollback()
 
+	query := `
+		INSERT INTO items (id, from_id, label, to_id, weight, properties)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			id = excluded.id,
+			from_id = excluded.from_id,
+			label = excluded.label,
+			to_id = excluded.to_id,
+			weight = excluded.weight,
+			properties = excluded.properties
+		RETURNING id, created_at, updated_at, from_id, label, to_id, weight, properties;
+	`
+
+	// Prepare the statement once and reuse it for all nodes.
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
 	edges := make([]models.Edge, len(e))
 
 	for i, e := range e {
@@ -414,20 +441,7 @@ func (s *Store) UpsertEdges(ctx context.Context, e ...models.Edge) ([]models.Edg
 			id = &e.ID
 		}
 
-		query := `
-			INSERT INTO items (id, from_id, label, to_id, weight, properties)
-			VALUES (?, ?, ?, ?, ?, ?)
-			ON CONFLICT(id) DO UPDATE SET
-				id = excluded.id,
-				from_id = excluded.from_id,
-				label = excluded.label,
-				to_id = excluded.to_id,
-				weight = excluded.weight,
-				properties = excluded.properties
-			RETURNING id, created_at, updated_at, from_id, label, to_id, weight, properties;
-		`
-
-		row := tx.QueryRowContext(ctx, query, id, e.From, e.Label, e.To, e.Weight, props)
+		row := stmt.QueryRowContext(ctx, query, id, e.From, e.Label, e.To, e.Weight, props)
 
 		var createdAt int64
 		var updatedAt int64
