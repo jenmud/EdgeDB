@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -42,18 +41,8 @@ func StaticAssets(mux *http.ServeMux) {
 func Index(mux *http.ServeMux, s store.Store) {
 	slog.Info("registered route", slog.String("route", "GET /ui/v1"))
 	mux.HandleFunc("GET /ui/v1", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// try and fetch the fist node in the graph, we need this because we do not
-		// know what the first ID is and can not assume it starts at 1. So we
-		// will fetch the first node in the table.
-		nodes, _ := s.Nodes(r.Context(), store.NodesArgs{Limit: 1})
-		if len(nodes) > 0 {
-			http.Redirect(w, r, fmt.Sprintf("/ui/v1/graph/nodes/%d", nodes[0].ID), http.StatusMovedPermanently)
-			return
-		}
-
-		pages.Index().Render(ctx, w)
+		http.Redirect(w, r, "/ui/v1/graph/filter/table", http.StatusMovedPermanently)
+		return
 	})
 }
 

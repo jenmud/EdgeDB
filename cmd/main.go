@@ -136,7 +136,7 @@ func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
 			return
 		}
 
-		http.Redirect(w, r, "/ui/v1", http.StatusMovedPermanently)
+		http.Redirect(w, r, "/ui/v1/graph/filter/table", http.StatusMovedPermanently)
 	})
 
 	return corsMiddleware(mux)

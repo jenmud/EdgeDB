@@ -58,13 +58,7 @@ templ FilterTablePage(nodes ...models.Node) {
 templ FilterTable(node ...models.Node) {
 	<div id="filter" class="md:flex md:w-full h-full">
 		<table class="table">
-			<theader>
-				<tr>
-					<th>ID</th>
-					<th>Label</th>
-					<th>Term match</th>
-				</tr>
-			</theader>
+			<theader></theader>
 			<tbody id="termResults">
 				@FilterTableRows(node...)
 			</tbody>
@@ -76,10 +70,11 @@ templ FilterTable(node ...models.Node) {
 templ FilterTableRows(node ...models.Node) {
 	for _, n := range node {
 		<tr class="cursor-pointer">
-			<td><a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>{ n.ID }</a></td>
-			<td><a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>{ n.Label }</a></td>
-			<td><a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>@templ.Raw(n.Snippet)
-</a></td>
+			<td class="flex justify-center items-center">
+				<a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>
+					@templ.Raw(n.Snippet)
+				</a>
+			</td>
 		</tr>
 	}
 }
