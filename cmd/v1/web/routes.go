@@ -9,6 +9,7 @@ import (
 
 	"github.com/jenmud/edgedb/cmd/v1/web/view/pages"
 	"github.com/jenmud/edgedb/internal/store"
+	"github.com/jenmud/edgedb/models"
 	"github.com/starfederation/datastar-go/datastar"
 )
 
@@ -118,6 +119,51 @@ func FilterGraphContent(mux *http.ServeMux, s store.Store) {
 		}
 
 		component := pages.FilterPageContent(graph)
+		component.Render(ctx, w)
+	})
+}
+
+func FilterGraphTable(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/filter/table"))
+	mux.HandleFunc("GET /ui/v1/graph/filter/table", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		nodes := []models.Node{}
+		component := pages.FilterTablePage(nodes...)
+		component.Render(ctx, w)
+	})
+}
+
+func FilterGraphTableContent(mux *http.ServeMux, s store.Store) {
+	slog.Info("registered route", slog.String("route", "GET /ui/v1/graph/filter/table/content"))
+	mux.HandleFunc("GET /ui/v1/graph/filter/table/content", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		type SignalStore struct {
+			Term   string `json:"term"`
+			Limit  int    `json:"limit"`
+			Count  int    `json:"count"`
+			LastID uint64 `json:"lastID"`
+		}
+
+		signals := SignalStore{}
+		if err := datastar.ReadSignals(r, &signals); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if signals.Term == "" {
+			return
+		}
+
+		// FIXME: the pagenation is not working as intended, so fixing the limit for now
+		//        need to also add back in the lastID when I figure out this pagenation stuff
+		nodes, err := s.NodesTermSearch(ctx, store.TermSearchArgs{Term: signals.Term, Limit: 100000000000000})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		component := pages.FilterTable(nodes...)
 		component.Render(ctx, w)
 	})
 }

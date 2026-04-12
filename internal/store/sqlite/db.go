@@ -273,7 +273,7 @@ func (s *Store) NodesTermSearch(ctx context.Context, args store.TermSearchArgs) 
 		fts.type = 'node'
 		AND fts MATCH ?
 		AND n.id > ?
-	ORDER BY bm25(fts), n.id
+	ORDER BY bm25(fts)
 	LIMIT ?;
 	`
 

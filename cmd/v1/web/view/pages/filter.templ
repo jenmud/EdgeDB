@@ -1,45 +1,85 @@
 package pages
 
 import (
-  "github.com/jenmud/edgedb/models"
-  "github.com/jenmud/edgedb/cmd/v1/web/view/components"
-  "github.com/jenmud/edgedb/cmd/v1/web/view/layout"
+	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
+	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
+	"github.com/jenmud/edgedb/models"
 )
 
 templ FilterPage() {
-  @layout.Base() {
-
-    <div class="flex w-full flex-col max-h-screen" data-signals='{term: "", limit: 1000}'>
-
+	@layout.Base() {
+		<div class="flex w-full flex-col max-h-screen" data-signals='{term: "", limit: 1000}'>
 			<div class="flex items-center justify-center py-4 sticky fixed top-0 left-0 w-full z-50 gap-4">
-        <span class="loading loading-ring loading-md" data-show="$fetching"></span>
-        <input class="input md:w-500" type="text" placeholder="search terms" data-bind:term data-on:input__debounce.300ms="@get('/ui/v1/graph/filter/content')" data-indicator:fetching autofocus/>
-        <span class="loading loading-ring loading-md" data-show="$fetching"></span>
-      </div>
-
-      <div class="divider">MATCHED</div>
-
-      @FilterPageContent(models.Graph{})
-
-    </div>
-  }
+				<span class="loading loading-ring loading-md" data-show="$fetching"></span>
+				<input class="input md:w-500" type="text" placeholder="search terms" data-bind:term data-on:input__debounce.300ms="@get('/ui/v1/graph/filter/content')" data-indicator:fetching autofocus/>
+				<span class="loading loading-ring loading-md" data-show="$fetching"></span>
+			</div>
+			<div class="divider">MATCHED</div>
+			@FilterPageContent(models.Graph{})
+		</div>
+	}
 }
 
-
 templ FilterPageContent(graph models.Graph) {
-  <div id="filter" class="md:flex md:w-full h-full">
+	<div id="filter" class="md:flex md:w-full h-full">
+		<div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
+			<h3 class="text-center underline py-4">Nodes</h3>
+			@components.Nodes(graph.Nodes...)
+		</div>
+		<div class="divider md:divider-horizontal"></div>
+		<div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
+			<h3 class="text-center underline py-4">Edges</h3>
+			@components.Edges(graph.Edges...)
+		</div>
+	</div>
+}
 
-    <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
-      <h3 class="text-center underline py-4">Nodes</h3>
-      @components.Nodes(graph.Nodes...)
-    </div>
+// FilterTablePage is a filter table page showing a pagination table.
+templ FilterTablePage(nodes ...models.Node) {
+	@layout.Base() {
+		<div class="flex w-full flex-col max-h-screen" data-signals='{term: "", limit: 100, count: 0, lastID: 0}'>
+			<div class="flex items-center justify-center py-4 sticky fixed top-0 left-0 w-full z-50 gap-4">
+				<span class="loading loading-ring loading-md" data-show="$fetching"></span>
+				<input class="input md:w-500" type="text" placeholder="search terms" data-bind:term data-on:input__debounce.300ms="@get('/ui/v1/graph/filter/table/content')" data-indicator:fetching autofocus/>
+				<span class="loading loading-ring loading-md" data-show="$fetching"></span>
+			</div>
+			<div class="divider">
+				MATCHED
+				if len(nodes) > 1 {
+					<span>{ len(nodes) }</span>
+				}
+			</div>
+			@FilterTable(nodes...)
+		</div>
+	}
+}
 
-    <div class="divider md:divider-horizontal"></div>
+templ FilterTable(node ...models.Node) {
+	<div id="filter" class="md:flex md:w-full h-full">
+		<table class="table">
+			<theader>
+				<tr>
+					<th>ID</th>
+					<th>Label</th>
+					<th>Term match</th>
+				</tr>
+			</theader>
+			<tbody id="termResults">
+				@FilterTableRows(node...)
+			</tbody>
+		</table>
+	</div>
+}
 
-    <div class="flex flex-col grow md:w-1/2 md:overflow-y-auto md:max-h-[calc(100vh-220px)]">
-      <h3 class="text-center underline py-4">Edges</h3>
-      @components.Edges(graph.Edges...)
-    </div>
-
-  </div>
+// FilterTableRows is one or more rows to append to the filter table.
+templ FilterTableRows(node ...models.Node) {
+	for _, n := range node {
+		<tr>
+			<td>{ n.ID }</td>
+			<td>{ n.Label }</td>
+			<td>
+				@templ.Raw(n.Snippet)
+			</td>
+		</tr>
+	}
 }
