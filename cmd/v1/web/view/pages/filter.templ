@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"fmt"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/components"
 	"github.com/jenmud/edgedb/cmd/v1/web/view/layout"
 	"github.com/jenmud/edgedb/models"
@@ -74,12 +75,11 @@ templ FilterTable(node ...models.Node) {
 // FilterTableRows is one or more rows to append to the filter table.
 templ FilterTableRows(node ...models.Node) {
 	for _, n := range node {
-		<tr>
-			<td>{ n.ID }</td>
-			<td>{ n.Label }</td>
-			<td>
-				@templ.Raw(n.Snippet)
-			</td>
+		<tr class="cursor-pointer">
+			<td><a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>{ n.ID }</a></td>
+			<td><a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>{ n.Label }</a></td>
+			<td><a href={ fmt.Sprintf("/ui/v1/graph/nodes/%d", n.ID) }>@templ.Raw(n.Snippet)
+</a></td>
 		</tr>
 	}
 }
