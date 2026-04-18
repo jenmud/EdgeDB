@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS nodes;
+DROP TABLE IF EXISTS edges;
+DROP TABLE IF EXISTS node_labels;
+DROP TABLE IF EXISTS edge_labels;
