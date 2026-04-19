@@ -17,16 +17,27 @@ CREATE TABLE IF NOT EXISTS edges (
 );
 
 
+CREATE INDEX idx_edges_from_id ON edges (from_id);
+CREATE INDEX idx_edges_to_id ON edges (to_id);
+CREATE INDEX idx_edges ON edges (from_id, to_id);
+
+
 CREATE TABLE IF NOT EXISTS node_labels (
   name TEXT NOT NULL,
   id REFERENCES nodes(id)
 );
 
 
+CREATE INDEX idx_nodes_labels ON node_labels (name);
+
+
 CREATE TABLE IF NOT EXISTS edge_labels (
   name TEXT NOT NULL,
   id REFERENCES edges(id)
 );
+
+
+CREATE INDEX idx_edges_labels ON edge_labels (name);
 
 
 CREATE OR REPLACE FUNCTION update_timestamp()
@@ -40,14 +51,12 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_update_node_timestamp
 BEFORE UPDATE ON nodes
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
+FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
 
 CREATE TRIGGER trg_update_edge_timestamp
 BEFORE UPDATE ON edges
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
+FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
 
 CREATE TABLE IF NOT EXISTS outbox (
@@ -55,6 +64,7 @@ CREATE TABLE IF NOT EXISTS outbox (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   processed_at TIMESTAMPTZ,
   topic TEXT NOT NULL,
+  table_name TEXT NOT NULL,
   event TEXT NOT NULL DEFAULT CHECK (event IN ('insert', 'update', 'delete')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processed')),
   msg JSONB NOT NULL DEFAULT '{}'::jsonb
@@ -65,25 +75,19 @@ CREATE INDEX idx_outbox_created ON outbox (created_at) WHERE status = 'pending';
 CREATE INDEX idx_outbox_processed ON outbox (processed_at) WHERE status = 'processed';
 
 
-CREATE OR REPLACE FUNCTION insert_event()
+CREATE OR REPLACE FUNCTION record_event()
 RETURNS TRIGGER SS
-  INSERT INTO outbox (topic, event, msg)
-  VALUES ('edgedb.event.insert', 'insert', row_to_json(NEW)::jsonb);
+  INSERT INTO outbox (table_name, topic, event, msg)
+  VALUES (
+    TG_TABLE_NAME,
+    'edgedb.event.' + TG_OP,
+    TG_OP,
+    row_to_json(NEW)::jsonb
+  );
   RETURN NEW;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION update_event()
-RETURNS TRIGGER SS
-  INSERT INTO outbox (topic, event, msg)
-  VALUES ('edgedb.event.update', 'update', row_to_json(NEW)::jsonb);
-  RETURN NEW;
-$$ LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE FUNCTION delete_event()
-RETURNS TRIGGER SS
-  INSERT INTO outbox (topic, event, msg)
-  VALUES ('edgedb.event.delete', 'delete', row_to_json(NEW)::jsonb);
-  RETURN NEW;
-$$ LANGUAGE plpgsql;
+CREATE TRIGGER IF NOT EXISTS node_insert
+AFTER INSERT OR UPDATE OR DELETE ON nodes
+FOR EACH ROW EXECUTE FUNCTION record_event();
