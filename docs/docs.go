@@ -453,11 +453,15 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "label": {
-                    "type": "string"
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "properties": {
-                    "$ref": "#/definitions/models.Properties"
+                    "type": "object",
+                    "additionalProperties": {}
                 },
                 "snippet": {
                     "description": "this is a special field show a small snippet of the match terms",
@@ -514,11 +518,15 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "label": {
-                    "type": "string"
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "properties": {
-                    "$ref": "#/definitions/models.Properties"
+                    "type": "object",
+                    "additionalProperties": {}
                 },
                 "snippet": {
                     "description": "this is a special field show a small snippet of the match terms",
@@ -528,10 +536,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "models.Properties": {
-            "type": "object",
-            "additionalProperties": {}
         }
     }
 }`

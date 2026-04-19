@@ -66,8 +66,6 @@ func (s *Store) Health(ctx context.Context) models.Health {
 }
 
 // Close closes the store.
-func (s *Store) Close() error {
-	ctx, cancel := context.WithTimeout(5 * time.Second)
-	defer cancel()
+func (s *Store) Close(ctx context.Context) error {
 	return db.Close(ctx)
 }

@@ -4,13 +4,12 @@ go 1.26
 
 require (
 	github.com/a-h/templ v0.3.1001
-	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/go-cmp v0.7.0
+	github.com/jackc/pgx/v5 v5.8.0
 	github.com/joho/godotenv v1.5.1
 	github.com/starfederation/datastar-go v1.1.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
-	modernc.org/sqlite v1.44.3
 )
 
 require (
@@ -105,6 +104,7 @@ require (
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
+	github.com/golang-migrate/migrate/v4 v4.19.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -129,7 +129,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgtype v1.14.4 // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
-	github.com/jackc/pgx/v5 v5.8.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
@@ -221,6 +220,7 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/ql v1.4.31 // indirect
 	modernc.org/sortutil v1.2.1 // indirect
+	modernc.org/sqlite v1.44.3 // indirect
 	modernc.org/strutil v1.2.1 // indirect
 	modernc.org/zappy v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect

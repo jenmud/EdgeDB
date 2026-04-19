@@ -22,10 +22,13 @@ definitions:
         type: integer
       id:
         type: integer
-      label:
-        type: string
+      labels:
+        items:
+          type: string
+        type: array
       properties:
-        $ref: '#/definitions/models.Properties'
+        additionalProperties: {}
+        type: object
       snippet:
         description: this is a special field show a small snippet of the match terms
         type: string
@@ -62,18 +65,18 @@ definitions:
         type: string
       id:
         type: integer
-      label:
-        type: string
+      labels:
+        items:
+          type: string
+        type: array
       properties:
-        $ref: '#/definitions/models.Properties'
+        additionalProperties: {}
+        type: object
       snippet:
         description: this is a special field show a small snippet of the match terms
         type: string
       updated_at:
         type: string
-    type: object
-  models.Properties:
-    additionalProperties: {}
     type: object
 info:
   contact: {}

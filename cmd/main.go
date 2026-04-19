@@ -16,7 +16,6 @@ import (
 	_ "github.com/jenmud/edgedb/docs"
 	"github.com/jenmud/edgedb/internal/server"
 	"github.com/jenmud/edgedb/internal/store"
-	"github.com/jenmud/edgedb/internal/store/sqlite"
 	_ "github.com/joho/godotenv/autoload"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -157,7 +156,7 @@ func main() {
 		panic("EDGEDB_STORE_DSN environment variable is not set, eg: :memory: or ./edgedb.db")
 	}
 
-	store, err := sqlite.New(ctx, dns)
+	s, err := store.New(ctx, dns)
 	if err != nil {
 		panic(fmt.Sprintf("setting up the store error: %s", err))
 	}

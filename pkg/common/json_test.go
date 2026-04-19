@@ -5,20 +5,19 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/jenmud/edgedb/models"
 	"github.com/jenmud/edgedb/pkg/common"
 )
 
 func TestFlattenMAP(t *testing.T) {
 	tests := []struct {
 		name       string // description of this test case
-		m          map[string]any
+		m          map[any]any
 		wantKeys   []string
 		wantValues []string
 	}{
 		{
 			name: "1-layered-map",
-			m: map[string]any{ // first layer
+			m: map[any]any{ // first layer
 				"name": "foo",
 				"age":  21,
 			},
@@ -27,9 +26,9 @@ func TestFlattenMAP(t *testing.T) {
 		},
 		{
 			name: "2-nested-layers-map",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[string]any{ // second layer
+				"meta": map[any]any{ // second layer
 					"age": 21,
 				},
 			},
@@ -38,11 +37,11 @@ func TestFlattenMAP(t *testing.T) {
 		},
 		{
 			name: "3-nested-layers-map",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[string]any{
+				"meta": map[any]any{
 					"age": 21,
-					"hair": map[string]any{ // third layer
+					"hair": map[any]any{ // third layer
 						"colour":    "brown",
 						"length_cm": 30,
 					},
@@ -53,13 +52,13 @@ func TestFlattenMAP(t *testing.T) {
 		},
 		{
 			name: "mixed-nested-types",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[string]any{
+				"meta": map[any]any{
 					"age":    21,
 					"height": nil,
 					"weight": "100kg",
-					"hair": map[string]int{ // third layer
+					"hair": map[any]int{ // third layer
 						"length": 30,
 					},
 				},
@@ -69,9 +68,9 @@ func TestFlattenMAP(t *testing.T) {
 		},
 		{
 			name: "using-properties-type",
-			m: models.Properties{
+			m: map[any]any{
 				"name": "foo",
-				"meta": models.Properties{
+				"meta": map[any]any{
 					"age": 21,
 				},
 			},
@@ -116,7 +115,7 @@ func TestKeys(t *testing.T) {
 	}{
 		{
 			name: "single-level",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
 				"age":  21,
 			},
@@ -124,9 +123,9 @@ func TestKeys(t *testing.T) {
 		},
 		{
 			name: "nested-2-levels",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[string]any{
+				"meta": map[any]any{
 					"age": 21,
 				},
 			},
@@ -134,7 +133,7 @@ func TestKeys(t *testing.T) {
 		},
 		{
 			name: "nested-2-levels-mixed-map-key-types",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
 				"meta": map[int]string{
 					21: "age",
@@ -144,11 +143,11 @@ func TestKeys(t *testing.T) {
 		},
 		{
 			name: "nested-2-levels",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[string]any{
+				"meta": map[any]any{
 					"age": 21,
-					"hair": map[string]string{
+					"hair": map[any]string{
 						"colour": "brown",
 					},
 				},
@@ -194,14 +193,14 @@ func TestValues(t *testing.T) {
 	}{
 		{
 			name: "single-level",
-			m:    map[string]any{"name": "foo", "age": 21},
+			m:    map[any]any{"name": "foo", "age": 21},
 			want: []string{"foo", "21"},
 		},
 		{
 			name: "2-levels",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[string]any{
+				"meta": map[any]any{
 					"age": 21,
 				},
 			},
@@ -209,11 +208,11 @@ func TestValues(t *testing.T) {
 		},
 		{
 			name: "3-levels",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[string]any{
+				"meta": map[any]any{
 					"age": 21,
-					"hair": map[string]any{
+					"hair": map[any]any{
 						"colour": "brown",
 					},
 				},
@@ -222,11 +221,11 @@ func TestValues(t *testing.T) {
 		},
 		{
 			name: "3-levels-mixed-map-key-types",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
-				"meta": map[int]any{
+				"meta": map[any]any{
 					21: "age",
-					1: map[string]int{
+					1: map[any]int{
 						"length": 100,
 					},
 				},
@@ -245,10 +244,10 @@ func TestValues(t *testing.T) {
 		},
 		{
 			name: "nested-with-nil-types",
-			m: map[string]any{
+			m: map[any]any{
 				"name": "foo",
 				"age":  nil,
-				"meta": map[string]any{
+				"meta": map[any]any{
 					"age":    21,
 					"height": nil,
 				},
