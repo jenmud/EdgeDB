@@ -47,7 +47,7 @@ test:
 
 
 generate-swagger:
-	$(GO) tool swag init --dir ./cmd,./cmd/v1/api,./cmd/v1/web,./models --output ./docs
+	$(GO) tool swag init --dir ./cmd,./models --output ./docs
 
 
 generate-ui:

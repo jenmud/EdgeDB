@@ -11,13 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jenmud/edgedb/cmd/v1/api"
-	"github.com/jenmud/edgedb/cmd/v1/web"
 	_ "github.com/jenmud/edgedb/docs"
-	"github.com/jenmud/edgedb/internal/server"
 	"github.com/jenmud/edgedb/internal/store"
 	_ "github.com/joho/godotenv/autoload"
-	httpSwagger "github.com/swaggo/http-swagger"
+	//httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // setupLogging configures the logging settings based on environment variables.
@@ -27,10 +24,13 @@ func setupLogging() {
 	switch strings.ToUpper(os.Getenv("EDGEDB_LOG_LEVEL")) {
 	case "DEBUG":
 		level = slog.LevelDebug
+
 	case "INFO":
 		level = slog.LevelInfo
+
 	case "WARN":
 		level = slog.LevelWarn
+
 	case "ERROR":
 		level = slog.LevelError
 	}
@@ -45,8 +45,10 @@ func setupLogging() {
 	switch strings.ToUpper(os.Getenv("EDGEDB_LOG_HANDLER")) {
 	case "JSON":
 		handler = slog.NewJSONHandler(os.Stdout, &handlerOpts)
+
 	case "TEXT":
 		fallthrough
+
 	default:
 		handler = slog.NewTextHandler(os.Stdout, &handlerOpts)
 	}
@@ -60,7 +62,7 @@ func setupLogging() {
 }
 
 // gracefulShutdown handles OS interrupt signals to gracefully shut down the server.
-func gracefulShutdown(ctx context.Context, apiServer *http.Server, done chan bool) {
+func gracefulShutdown(ctx context.Context, server *http.Server, done chan bool) {
 	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -75,7 +77,7 @@ func gracefulShutdown(ctx context.Context, apiServer *http.Server, done chan boo
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := apiServer.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(ctx); err != nil {
 		slog.Error("Server forced to shutdown", slog.String("reason", err.Error()))
 	}
 
@@ -83,68 +85,7 @@ func gracefulShutdown(ctx context.Context, apiServer *http.Server, done chan boo
 	done <- true
 }
 
-// corsMiddleware adds CORS headers to the HTTP responses.
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// Set CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "*") // Replace "*" with specific origins if needed
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
-		w.Header().Set("Access-Control-Allow-Credentials", "false") // Set to "true" if credentials are required
-
-		// Handle preflight OPTIONS requests
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		// Proceed with the next handler
-		next.ServeHTTP(w, r)
-	})
-}
-
-// setupRoutes sets up all the necessary routes used by the server.
-func setupRoutes(mux *http.ServeMux, s store.Store) http.Handler {
-
-	web.StaticAssets(mux)
-	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
-
-	// ui routes
-	web.Index(mux, s)
-	web.SubGraph(mux, s)
-	web.FilterGraph(mux, s)
-	web.FilterGraphContent(mux, s)
-	web.FilterGraphTable(mux, s)
-	web.FilterGraphTableContent(mux, s)
-
-	// api routes
-	api.GETGraph(mux, s)
-	api.GETNodes(mux, s)
-	api.PUTNodes(mux, s)
-	api.GETEdges(mux, s)
-	api.PUTEdges(mux, s)
-	api.PUTGraph(mux, s)
-	api.GETSubGraphByNode(mux, s)
-	api.HealthStatus(mux, s)
-
-	// catch all
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		http.Redirect(w, r, "/ui/v1/graph/filter/table", http.StatusMovedPermanently)
-	})
-
-	return corsMiddleware(mux)
-}
-
-// @Title EdgeDB API
-// @Version 1.0
-// @Description EdgeDB API server
-// @BasePath /
 func main() {
 	setupLogging()
 
@@ -161,10 +102,13 @@ func main() {
 		panic(fmt.Sprintf("setting up the store error: %s", err))
 	}
 
-	defer store.Close()
+	defer s.Close(ctx)
 
-	mux := setupRoutes(http.NewServeMux(), store)
-	server := server.NewServer(mux, os.Getenv("EDGEDB_WEB_ADDRESS"), store)
+	mux := http.NewServeMux()
+	server := &http.Server{
+		Addr: os.Getenv("EDGEDB_WEB_ADDRESS"),
+		Handler: mux,
+	}
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
