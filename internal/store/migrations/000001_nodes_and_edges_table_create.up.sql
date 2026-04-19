@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS edges (
 );
 
 
-CREATE INDEX idx_edges_from_id ON edges (from_id);
-CREATE INDEX idx_edges_to_id ON edges (to_id);
-CREATE INDEX idx_edges ON edges (from_id, to_id);
+CREATE INDEX IF EXISTS idx_edges_from_id ON edges (from_id);
+CREATE INDEX IF EXISTS idx_edges_to_id ON edges (to_id);
+CREATE INDEX IF EXISTS idx_edges ON edges (from_id, to_id);
 
 
 CREATE TABLE IF NOT EXISTS node_labels (
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS node_labels (
 );
 
 
-CREATE INDEX idx_nodes_labels ON node_labels (name);
+CREATE INDEX IF EXISTS idx_nodes_labels ON node_labels (name);
 
 
 CREATE TABLE IF NOT EXISTS edge_labels (
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS edge_labels (
 );
 
 
-CREATE INDEX idx_edges_labels ON edge_labels (name);
+CREATE INDEX IF EXISTS idx_edges_labels ON edge_labels (name);
 
 
 CREATE OR REPLACE FUNCTION update_timestamp()
@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS outbox (
 );
 
 
-CREATE INDEX idx_outbox_created ON outbox (created_at) WHERE status = 'pending';
-CREATE INDEX idx_outbox_processed ON outbox (processed_at) WHERE status = 'processed';
+CREATE INDEX IF EXISTS idx_outbox_created ON outbox (created_at) WHERE status = 'pending';
+CREATE INDEX IF EXISTS idx_outbox_processed ON outbox (processed_at) WHERE status = 'processed';
 
 
 CREATE OR REPLACE FUNCTION record_event()
@@ -88,6 +88,11 @@ RETURNS TRIGGER SS
 $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER IF NOT EXISTS node_insert
+CREATE TRIGGER IF NOT EXISTS trg_node_event
 AFTER INSERT OR UPDATE OR DELETE ON nodes
+FOR EACH ROW EXECUTE FUNCTION record_event();
+
+
+CREATE TRIGGER IF NOT EXISTS trg_edge_event
+AFTER INSERT OR UPDATE OR DELETE ON edges
 FOR EACH ROW EXECUTE FUNCTION record_event();
