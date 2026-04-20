@@ -12,6 +12,7 @@ services:
     networks:
       - edgedb
 
+
   db:
     image: postgres:latest
     container_name: postgres
@@ -23,11 +24,21 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - $PWD/example:/var/lib/postgresql/data
+      - $PWD/example/postgres/data:/var/lib/postgresql
     networks:
       - edgedb
 
 
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - edgedb
+
+
+
 networks:
-  - edgedb
+  edgedb:
 
