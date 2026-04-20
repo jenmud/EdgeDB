@@ -18,6 +18,7 @@ install-go-tools:
 
 
 install: tidy install-gotests install-go-tools install-ui-tools
+	$(GO) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 
 # If you want to use vscode to generate tests, you will need to have gotests installed on the machine
@@ -52,6 +53,10 @@ generate-swagger:
 
 generate-ui:
 	$(GO) tool templ generate
+
+
+migrations:
+	~/go/bin/migrate -path ./internal/store/migrations -database "postgres://local:dev@localhost:5432/edgedb?sslmode=disable" up
 
 
 generate: generate-ui generate-swagger
