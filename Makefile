@@ -59,6 +59,14 @@ migrations:
 	~/go/bin/migrate -path ./internal/store/migrations -database "postgres://local:dev@localhost:5432/edgedb?sslmode=disable" up
 
 
+migrations-down:
+	~/go/bin/migrate -path ./internal/store/migrations -database "postgres://local:dev@localhost:5432/edgedb?sslmode=disable" down
+
+
+migrations-drop:
+	~/go/bin/migrate -path ./internal/store/migrations -database "postgres://local:dev@localhost:5432/edgedb?sslmode=disable" drop -f
+
+
 generate: generate-ui generate-swagger
 
 
